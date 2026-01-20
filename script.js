@@ -5,6 +5,74 @@ const gameState = {
     isTyping: false
 };
 
+let imgWidth, imgHeight;
+
+const updatePositions = () => {
+    if (!imgWidth || !imgHeight) return; // 图片未加载
+    
+    // 删除之前的调试信息
+    document.querySelectorAll('.debug-info').forEach(d => d.remove());
+    
+    // 获取当前激活的场景
+    const currentScene = document.querySelector('.scene.active');
+    
+    // 定义每个物品相对于图片的百分比位置和padding（padding格式: 'top% right%'，top/bottom相对于imgHeight，left/right相对于imgWidth）
+    const objectConfigs = {
+        'wardrobe': { padding: '18% 10%', top: '50%', left: '75%' },
+        'monitor':  { padding: '4% 4%', top: '58%', left: '13%' },
+        'trash-can': { padding: '1.5%', top: '80%', left: '15%' },
+        'green-cabinet': { padding: '1.5%', top: '70%', left: '20%' },
+        'plant': { padding: '1.5%', top: '60%', left: '80%' },
+        'washer': { padding: '1.5%', top: '50%', left: '85%' }
+    };
+    
+    // 计算图片显示参数 
+    const container = document.getElementById('game-container');
+    const containerWidth = container.clientWidth;
+    const containerHeight = container.clientHeight;
+    const scale = Math.min(containerWidth / imgWidth, containerHeight / imgHeight);
+    const displayWidth = imgWidth * scale;
+    const displayHeight = imgHeight * scale;
+    const offsetX = (containerWidth - displayWidth) / 2;
+    const offsetY = (containerHeight - displayHeight) / 2;
+    
+    // 应用位置
+    Object.keys(objectConfigs).forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const config = objectConfigs[id];
+            const topPercent = parseFloat(config.top) / 100;
+            const leftPercent = parseFloat(config.left) / 100;
+            const newTop = topPercent * imgHeight * scale + offsetY;
+            const newLeft = leftPercent * imgWidth * scale + offsetX;
+            el.style.top = newTop + 'px';
+            el.style.left = newLeft + 'px';
+            
+            // 解析padding: 'top% right%' -> top/bottom: top% of imgHeight, left/right: right% of imgWidth
+            const paddingParts = config.padding.split(' ');
+            const paddingTopPercent = parseFloat(paddingParts[0]) / 100;
+            const paddingRightPercent = parseFloat(paddingParts[1]) / 100;
+            const paddingTop = paddingTopPercent * imgHeight * scale;
+            const paddingRight = paddingRightPercent * imgWidth * scale;
+            el.style.padding = `${paddingTop}px ${paddingRight}px`;
+            
+            // 恢复原文本
+            el.textContent = el.dataset.originalText || el.textContent.split('\n')[0];
+            el.dataset.originalText = el.textContent;
+            
+            // 仅为当前场景的物品添加调试信息
+            if (el.closest('.scene') === currentScene) {
+                const debugInfo = document.createElement('div');
+                debugInfo.className = 'debug-info';
+                debugInfo.innerHTML = `<small>Top: ${newTop.toFixed(0)}px, Left: ${newLeft.toFixed(0)}px<br>Padding: ${Math.round(paddingTop)}px ${Math.round(paddingRight)}px</small>`;
+                debugInfo.style.top = newTop + 'px'; // 与物品顶部对齐
+                debugInfo.style.left = (newLeft + el.offsetWidth / 2 + 5) + 'px'; // 在物品视觉右侧5px
+                container.appendChild(debugInfo);
+            }
+        }
+    });
+};
+
 // --- 对话系统 ---
 const diagBox = document.getElementById('dialogue-box');
 const diagText = document.getElementById('dialogue-text');
@@ -44,6 +112,9 @@ function goToScene(sceneId) {
     document.getElementById(`scene-${sceneId}`).classList.add('active');
     
     if(sceneId === 'bedroom') showDialogue("卧室里乱糟糟的...");
+    
+    // 更新物品位置和调试信息
+    updatePositions();
 }
 
 // --- 互动逻辑 ---
@@ -82,53 +153,6 @@ window.onload = () => {
     // 获取图片尺寸并调整物品位置
     const img = new Image();
     img.src = 'assets/Picture/room.png';
-    let imgWidth, imgHeight;
-    
-    const updatePositions = () => {
-        if (!imgWidth || !imgHeight) return; // 图片未加载
-        
-        // 定义每个物品相对于图片的百分比位置和padding（padding格式: 'top% right%'，top/bottom相对于imgHeight，left/right相对于imgWidth）
-        const objectConfigs = {
-            'wardrobe': { padding: '18% 10%', top: '50%', left: '75%' },
-            'monitor':  { padding: '4% 4%', top: '58%', left: '13%' },
-            'trash-can': { padding: '1.5%', top: '80%', left: '15%' },
-            'green-cabinet': { padding: '1.5%', top: '70%', left: '20%' },
-            'plant': { padding: '1.5%', top: '60%', left: '80%' },
-            'washer': { padding: '1.5%', top: '50%', left: '85%' }
-        };
-        
-        // 计算图片显示参数 
-        const container = document.getElementById('game-container');
-        const containerWidth = container.clientWidth;
-        const containerHeight = container.clientHeight;
-        const scale = Math.min(containerWidth / imgWidth, containerHeight / imgHeight);
-        const displayWidth = imgWidth * scale;
-        const displayHeight = imgHeight * scale;
-        const offsetX = (containerWidth - displayWidth) / 2;
-        const offsetY = (containerHeight - displayHeight) / 2;
-        
-        // 应用位置
-        Object.keys(objectConfigs).forEach(id => {
-            const el = document.getElementById(id);
-            if (el) {
-                const config = objectConfigs[id];
-                const topPercent = parseFloat(config.top) / 100;
-                const leftPercent = parseFloat(config.left) / 100;
-                const newTop = topPercent * imgHeight * scale + offsetY;
-                const newLeft = leftPercent * imgWidth * scale + offsetX;
-                el.style.top = newTop + 'px';
-                el.style.left = newLeft + 'px';
-                
-                // 解析padding: 'top% right%' -> top/bottom: top% of imgHeight, left/right: right% of imgWidth
-                const paddingParts = config.padding.split(' ');
-                const paddingTopPercent = parseFloat(paddingParts[0]) / 100;
-                const paddingRightPercent = parseFloat(paddingParts[1]) / 100;
-                const paddingTop = paddingTopPercent * imgHeight * scale;
-                const paddingRight = paddingRightPercent * imgWidth * scale;
-                el.style.padding = `${paddingTop}px ${paddingRight}px`;
-            }
-        });
-    };
     
     img.onload = () => {
         imgWidth = img.naturalWidth;
@@ -145,20 +169,9 @@ window.onload = () => {
     const muteBtn = document.getElementById('mute-btn');
     let isMuted = false;
 
-    // 设置音量为50%
+    // 设置音量
     bgm.volume = 0.2;
     clickSfx.volume = 0.3;
-
-    // // 尝试自动播放背景音乐，如果失败则在第一次点击时播放
-    // bgm.play().catch(() => {
-    //     let bgmStarted = false;
-    //     document.body.addEventListener('click', () => {
-    //         if (!bgmStarted) {
-    //             bgm.play();
-    //             bgmStarted = true;
-    //         }
-    //     });
-    // });
 
     // 静音按钮事件
     muteBtn.addEventListener('click', () => {

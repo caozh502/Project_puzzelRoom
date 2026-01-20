@@ -125,3 +125,14 @@ body {
 }
 
 .hidden { display: none !important; }
+
+/* 调试信息样式 */
+.debug-info {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.5);
+    color: white;
+    font-size: 10px;
+    padding: 2px 4px;
+    border-radius: 3px;
+    pointer-events: none;
+}
