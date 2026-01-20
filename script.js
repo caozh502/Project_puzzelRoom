@@ -1,3 +1,4 @@
+// 这是一个点击式解谜游戏，通过显示/隐藏 .scene 类来切换房间，通过 showDialogue 函数显示对话。
 const gameState = {
     inventory: [],
     currentText: "",
