@@ -79,23 +79,65 @@ function updateInventory() {
 window.onload = () => {
     showDialogue("又是忙碌的一天，先四处看看吧。");
     
-    // 定义每个物品的自定义尺寸数据
-    const objectConfigs = {
-        'wardrobe': { padding: '145px 85px', top: '300px', left: '600px' },
-        'monitor':  { padding: '34px 39px', top: '350px', left: '100px' },
-        'trash-can': { padding: '10px', top: '480px', left: '120px' },
-        'green-cabinet': { padding: '10px', top: '420px', left: '160px' },
-        'plant': { padding: '10px', top: '360px', left: '640px' },
-        'washer': { padding: '10px', top: '300px', left: '680px' }
+    // 获取图片尺寸并调整物品位置
+    const img = new Image();
+    img.src = 'assets/Picture/room.png';
+    let imgWidth, imgHeight;
+    
+    const updatePositions = () => {
+        if (!imgWidth || !imgHeight) return; // 图片未加载
+        
+        // 定义每个物品相对于图片的百分比位置和padding（padding格式: 'top% right%'，top/bottom相对于imgHeight，left/right相对于imgWidth）
+        const objectConfigs = {
+            'wardrobe': { padding: '18% 10%', top: '50%', left: '75%' },
+            'monitor':  { padding: '4% 4%', top: '58%', left: '13%' },
+            'trash-can': { padding: '1.5%', top: '80%', left: '15%' },
+            'green-cabinet': { padding: '1.5%', top: '70%', left: '20%' },
+            'plant': { padding: '1.5%', top: '60%', left: '80%' },
+            'washer': { padding: '1.5%', top: '50%', left: '85%' }
+        };
+        
+        // 计算图片显示参数 
+        const container = document.getElementById('game-container');
+        const containerWidth = container.clientWidth;
+        const containerHeight = container.clientHeight;
+        const scale = Math.min(containerWidth / imgWidth, containerHeight / imgHeight);
+        const displayWidth = imgWidth * scale;
+        const displayHeight = imgHeight * scale;
+        const offsetX = (containerWidth - displayWidth) / 2;
+        const offsetY = (containerHeight - displayHeight) / 2;
+        
+        // 应用位置
+        Object.keys(objectConfigs).forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                const config = objectConfigs[id];
+                const topPercent = parseFloat(config.top) / 100;
+                const leftPercent = parseFloat(config.left) / 100;
+                const newTop = topPercent * imgHeight * scale + offsetY;
+                const newLeft = leftPercent * imgWidth * scale + offsetX;
+                el.style.top = newTop + 'px';
+                el.style.left = newLeft + 'px';
+                
+                // 解析padding: 'top% right%' -> top/bottom: top% of imgHeight, left/right: right% of imgWidth
+                const paddingParts = config.padding.split(' ');
+                const paddingTopPercent = parseFloat(paddingParts[0]) / 100;
+                const paddingRightPercent = parseFloat(paddingParts[1]) / 100;
+                const paddingTop = paddingTopPercent * imgHeight * scale;
+                const paddingRight = paddingRightPercent * imgWidth * scale;
+                el.style.padding = `${paddingTop}px ${paddingRight}px`;
+            }
+        });
     };
-
-    // 循环遍历并应用样式
-    Object.keys(objectConfigs).forEach(id => {
-        const el = document.getElementById(id);
-        if (el) {
-            Object.assign(el.style, objectConfigs[id]);
-        }
-    });
+    
+    img.onload = () => {
+        imgWidth = img.naturalWidth;
+        imgHeight = img.naturalHeight;
+        updatePositions();
+    };
+    
+    // 监听窗口大小变化，动态调整位置
+    window.addEventListener('resize', updatePositions);
 
     // 音频控制
     const bgm = document.getElementById('bgm');
@@ -107,16 +149,16 @@ window.onload = () => {
     bgm.volume = 0.2;
     clickSfx.volume = 0.3;
 
-    // 尝试自动播放背景音乐，如果失败则在第一次点击时播放
-    bgm.play().catch(() => {
-        let bgmStarted = false;
-        document.body.addEventListener('click', () => {
-            if (!bgmStarted) {
-                bgm.play();
-                bgmStarted = true;
-            }
-        });
-    });
+    // // 尝试自动播放背景音乐，如果失败则在第一次点击时播放
+    // bgm.play().catch(() => {
+    //     let bgmStarted = false;
+    //     document.body.addEventListener('click', () => {
+    //         if (!bgmStarted) {
+    //             bgm.play();
+    //             bgmStarted = true;
+    //         }
+    //     });
+    // });
 
     // 静音按钮事件
     muteBtn.addEventListener('click', () => {
