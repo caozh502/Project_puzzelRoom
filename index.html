@@ -10,8 +10,8 @@
     <div id="game-container">
         <div id="scene-livingroom" class="scene active">
             <div class="label">客厅</div>
-            <div id="fridge" class="interactive-obj">冰箱</div>
-            <div id="cat-litter" class="interactive-obj">猫砂盆</div>
+            <div id="wardrobe" class="interactive-obj">衣柜</div>
+            <div id="monitor" class="interactive-obj">显示器</div>
             <button class="nav-btn" onclick="goToScene('bedroom')">去卧室 ⮕</button>
         </div>
 
@@ -37,6 +37,13 @@
         </div>
 
         <div id="inventory-display">物品栏: 无</div>
+        
+        <!-- 音频元素 -->
+        <audio id="bgm" src="assets/Audio/MainMenu_BGM.mp3" autoplay loop></audio>
+        <audio id="click-sfx" src="assets/Audio/mouseClick_SFX.mp3"></audio>
+        
+        <!-- 静音按钮 -->
+        <div id="mute-btn">🔊</div>
     </div>
 
     <script src="script.js"></script>

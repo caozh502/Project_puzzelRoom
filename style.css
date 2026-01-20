@@ -21,9 +21,7 @@ body {
     position: absolute;
     width: 100%;
     height: 100%;
-    display: none; /* 默认隐藏 */
-    justify-content: center;
-    align-items: center;
+    display: none; 
 }
 
 .scene.active {
@@ -32,7 +30,7 @@ body {
 
 /* 场景颜色区分 */
 #scene-livingroom { 
-    background-image: url('assets/room.png');
+    background-image: url('assets/Picture/room.png');
     background-size: contain;
     background-position: center;
     background-repeat: no-repeat;
@@ -50,13 +48,14 @@ body {
 
 /* 互动点样式 */
 .interactive-obj {
-    padding: 20px;
-    background: rgba(255,255,255,0.2);
-    border: 2px dashed #fff;
+    position: absolute; /* 核心：允许通过 top/left 指定位置 */
+    padding: 8px 12px;
+    background: rgba(255, 255, 255, 0.3);
+    border: 2px solid #fff;
+    border-radius: 5px;
     color: white;
-    cursor: pointer;
-    margin: 10px;
-    transition: 0.3s;
+    cursor: default;
+    transform: translate(-50%, -50%); /* 确保坐标点位于物品中心 */
 }
 
 .interactive-obj:hover {
@@ -111,6 +110,18 @@ body {
     color: white;
     background: rgba(0,0,0,0.5);
     padding: 5px 10px;
+}
+
+#mute-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    font-size: 24px;
+    cursor: pointer;
+    color: white;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
 }
 
 .hidden { display: none !important; }
