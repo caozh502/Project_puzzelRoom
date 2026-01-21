@@ -6,6 +6,8 @@ const gameState = {
 };
 
 let imgWidth, imgHeight;
+// 调试开关：禁用梦境开场（眨眼+去模糊）
+const ENABLE_DREAM_INTRO = false;
 
 const updatePositions = () => {
     if (!imgWidth || !imgHeight) return; // 图片未加载
@@ -18,12 +20,13 @@ const updatePositions = () => {
     
     // 定义每个物品相对于图片的百分比位置和padding（padding格式: 'top% right%'，top/bottom相对于imgHeight，left/right相对于imgWidth）
     const objectConfigs = {
-        'wardrobe': { padding: '18% 10%', top: '50%', left: '75%' },
+        'wardrobe': { padding: '9% 8%', top: '50%', left: '80%' },
         'monitor':  { padding: '4% 4%', top: '58%', left: '13%' },
         'trash-can': { padding: '1.5%', top: '80%', left: '15%' },
         'green-cabinet': { padding: '1.5%', top: '70%', left: '20%' },
         'plant': { padding: '1.5%', top: '60%', left: '80%' },
-        'washer': { padding: '1.5%', top: '50%', left: '85%' }
+        'washer': { padding: '1.5%', top: '50%', left: '85%' },
+        'light-switch': { padding: '0.5% 0.5%', top: '52%', left: '63%' }
     };
     
     // 计算图片显示参数 
@@ -45,8 +48,10 @@ const updatePositions = () => {
             const leftPercent = parseFloat(config.left) / 100;
             const newTop = topPercent * imgHeight * scale + offsetY;
             const newLeft = leftPercent * imgWidth * scale + offsetX;
-            el.style.top = newTop + 'px';
-            el.style.left = newLeft + 'px';
+            const topPct = (newTop / containerHeight) * 100;
+            const leftPct = (newLeft / containerWidth) * 100;
+            el.style.top = topPct + '%';
+            el.style.left = leftPct + '%';
             
             // 解析padding: 'top% right%' -> top/bottom: top% of imgHeight, left/right: right% of imgWidth
             const paddingParts = config.padding.split(' ');
@@ -54,17 +59,19 @@ const updatePositions = () => {
             const paddingRightPercent = parseFloat(paddingParts[1]) / 100;
             const paddingTop = paddingTopPercent * imgHeight * scale;
             const paddingRight = paddingRightPercent * imgWidth * scale;
-            el.style.padding = `${paddingTop}px ${paddingRight}px`;
+            el.style.padding = config.padding;
             
-            // 恢复原文本
-            el.textContent = el.dataset.originalText || el.textContent.split('\n')[0];
-            el.dataset.originalText = el.textContent;
+            // 将原文本转移到调试信息：保存在 data-originalText，清空元素内部文本
+            const originalLabel = el.dataset.originalText || el.textContent.split('\n')[0];
+            el.dataset.originalText = originalLabel;
+            el.textContent = '';
+            el.setAttribute('aria-label', originalLabel);
             
             // 仅为当前场景的物品添加调试信息
             if (el.closest('.scene') === currentScene) {
                 const debugInfo = document.createElement('div');
                 debugInfo.className = 'debug-info';
-                debugInfo.innerHTML = `<small>Top: ${newTop.toFixed(0)}px, Left: ${newLeft.toFixed(0)}px<br>Padding: ${Math.round(paddingTop)}px ${Math.round(paddingRight)}px</small>`;
+                debugInfo.innerHTML = `<small>@${originalLabel}<br>Top: ${newTop.toFixed(0)}px, Left: ${newLeft.toFixed(0)}px<br>Padding: ${Math.round(paddingTop)}px ${Math.round(paddingRight)}px</small>`;
                 debugInfo.style.top = newTop + 'px'; // 与物品顶部对齐
                 debugInfo.style.left = (newLeft + el.offsetWidth / 2 + 5) + 'px'; // 在物品视觉右侧5px
                 container.appendChild(debugInfo);
@@ -148,7 +155,31 @@ function updateInventory() {
 
 // 开场白
 window.onload = () => {
-    showDialogue("又是忙碌的一天，先四处看看吧。");
+    // 启动：根据开关选择是否执行梦境开场
+    const container = document.getElementById('game-container');
+    const overlay = document.getElementById('dream-overlay');
+    if (ENABLE_DREAM_INTRO && container && overlay) {
+        container.classList.add('dimmed');
+        container.classList.add('dreaming');
+        overlay.classList.add('blink');
+        overlay.addEventListener('animationend', () => {
+            overlay.remove();
+        });
+        container.addEventListener('animationend', (e) => {
+            if (e.animationName === 'dreamUnblur') {
+                container.classList.remove('dreaming');
+                showDialogue("我刚刚还躺在床上，怎么现在在客厅里了？房间好昏暗……");
+            }
+        });
+    } else {
+        // 调试：禁用梦境开场，但保持昏暗效果不受影响
+        if (overlay) overlay.remove();
+        if (container) {
+            container.classList.remove('dreaming');
+            container.classList.add('dimmed');
+        }
+        showDialogue("我刚刚还躺在床上，怎么现在在客厅里了？房间好昏暗……");
+    }
     
     // 获取图片尺寸并调整物品位置
     const img = new Image();
@@ -168,6 +199,7 @@ window.onload = () => {
     const clickSfx = document.getElementById('click-sfx');
     const muteBtn = document.getElementById('mute-btn');
     const hideBtn = document.getElementById('hide-btn');
+        const lightSwitch = document.getElementById('light-switch');
     let isMuted = false;
     let interactivesHidden = false;
 
@@ -191,6 +223,13 @@ window.onload = () => {
         hideBtn.textContent = interactivesHidden ? '🙈' : '👁️';
         hideBtn.title = interactivesHidden ? '显示互动框' : '隐藏互动框';
     });
+
+        // 开灯互动：移除昏暗效果
+        lightSwitch.addEventListener('click', () => {
+            const container = document.getElementById('game-container');
+            container.classList.remove('dimmed');
+            showDialogue("打开了灯，房间恢复明亮。");
+        });
 
     // 鼠标点击音效
     document.body.addEventListener('click', () => {
