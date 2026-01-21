@@ -63,6 +63,32 @@ body {
     background: rgba(255,255,255,0.4);
 }
 
+/* 图片展示覆盖层样式 */
+#image-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 400;
+}
+
+#image-overlay img {
+    max-width: 70%;
+    max-height: 70%;
+    border: 3px solid #fff;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.6);
+}
+
+/* 展示图片时模糊当前场景背景 */
+.image-open .scene.active {
+    filter: blur(12px);
+}
+
 /* 导航按钮 */
 .nav-btn {
     position: absolute;
@@ -210,4 +236,9 @@ body {
 /* 开灯前的昏暗效果：降低亮度与饱和度，形成“未开灯”氛围 */
 #game-container.dimmed .scene.active {
     filter: brightness(0.3) saturate(0.5);
+}
+
+/* 当图片打开且仍处于昏暗状态时，叠加模糊与昏暗效果 */
+body.image-open #game-container.dimmed .scene.active {
+    filter: blur(12px) brightness(0.3) saturate(0.5);
 }

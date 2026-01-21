@@ -2,8 +2,13 @@
 const gameState = {
     inventory: [],
     currentText: "",
-    isTyping: false
+    isTyping: false,
+    dialogueQueue: [],
+    justCompleted: false
 };
+
+// 记录打字计时器以便可取消
+let typingTimer = null;
 
 let imgWidth, imgHeight;
 // 调试开关：禁用梦境开场（眨眼+去模糊）
@@ -21,7 +26,8 @@ const updatePositions = () => {
     // 定义每个物品相对于图片的百分比位置和padding（padding格式: 'top% right%'，top/bottom相对于imgHeight，left/right相对于imgWidth）
     const objectConfigs = {
         'wardrobe': { padding: '9% 8%', top: '50%', left: '80%' },
-        'monitor':  { padding: '4% 4%', top: '58%', left: '13%' },
+        'monitor':  { padding: '2% 4%', top: '58%', left: '13%' },
+        'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
         'trash-can': { padding: '1.5%', top: '80%', left: '15%' },
         'green-cabinet': { padding: '1.5%', top: '70%', left: '20%' },
         'plant': { padding: '1.5%', top: '60%', left: '80%' },
@@ -85,22 +91,30 @@ const diagBox = document.getElementById('dialogue-box');
 const diagText = document.getElementById('dialogue-text');
 
 function showDialogue(text) {
-    if (gameState.isTyping) return;
-    
+    // 若正在打字，则将新文本加入队列，等待当前对话结束或点击继续
+    if (gameState.isTyping) {
+        gameState.dialogueQueue.push(text);
+        return;
+    }
+
     diagBox.classList.remove('hidden');
     gameState.isTyping = true;
+    gameState.currentText = text;
     diagText.innerText = "";
-    
+
     let i = 0;
     const speed = 50; // 打字速度（毫秒）
 
     function type() {
-        if (i < text.length) {
-            diagText.innerText += text.charAt(i);
+        // 若已被点击完成，则终止打字
+        if (!gameState.isTyping) return;
+        if (i < gameState.currentText.length) {
+            diagText.innerText += gameState.currentText.charAt(i);
             i++;
-            setTimeout(type, speed);
+            typingTimer = setTimeout(type, speed);
         } else {
             gameState.isTyping = false;
+            typingTimer = null;
         }
     }
     type();
@@ -108,9 +122,29 @@ function showDialogue(text) {
 
 // 点击对话框关闭
 diagBox.addEventListener('click', () => {
-    if (!gameState.isTyping) {
-        diagBox.classList.add('hidden');
+    // 若仍在打字，立即完成显示当前文本，再次点击才关闭
+    if (gameState.isTyping) {
+        gameState.isTyping = false;
+        if (typingTimer) {
+            clearTimeout(typingTimer);
+            typingTimer = null;
+        }
+        diagText.innerText = gameState.currentText || diagText.innerText;
+        return;
     }
+    // 刚刚通过全局点击完成打字：本次点击不关闭，仅复位标记
+    if (gameState.justCompleted) {
+        gameState.justCompleted = false;
+        return;
+    }
+    // 若存在后续队列，则显示下一条对话
+    if (gameState.dialogueQueue.length > 0) {
+        const next = gameState.dialogueQueue.shift();
+        showDialogue(next);
+        return;
+    }
+    // 否则关闭对话框
+    diagBox.classList.add('hidden');
 });
 
 // --- 场景切换 ---
@@ -169,6 +203,7 @@ window.onload = () => {
             if (e.animationName === 'dreamUnblur') {
                 container.classList.remove('dreaming');
                 showDialogue("我刚刚还躺在床上，怎么现在在客厅里了？房间好昏暗……");
+                showDialogue("让我找找开灯的开关吧。");
             }
         });
     } else {
@@ -179,6 +214,7 @@ window.onload = () => {
             container.classList.add('dimmed');
         }
         showDialogue("我刚刚还躺在床上，怎么现在在客厅里了？房间好昏暗……");
+        showDialogue("让我找找开灯的开关吧。");
     }
     
     // 获取图片尺寸并调整物品位置
@@ -194,24 +230,43 @@ window.onload = () => {
     // 监听窗口大小变化，动态调整位置
     window.addEventListener('resize', updatePositions);
 
+    // 全局点击（捕获阶段）：打字时任意点击立即完成剩余文字
+    document.addEventListener('click', (e) => {
+        if (!diagBox.classList.contains('hidden') && gameState.isTyping) {
+            gameState.isTyping = false;
+            if (typingTimer) {
+                clearTimeout(typingTimer);
+                typingTimer = null;
+            }
+            diagText.innerText = gameState.currentText || diagText.innerText;
+            gameState.justCompleted = true;
+        }
+    }, true);
+
     // 音频控制
     const bgm = document.getElementById('bgm');
     const clickSfx = document.getElementById('click-sfx');
+    const lightSfx = document.getElementById('light-sfx');
     const muteBtn = document.getElementById('mute-btn');
     const hideBtn = document.getElementById('hide-btn');
-        const lightSwitch = document.getElementById('light-switch');
+    const lightSwitch = document.getElementById('light-switch');
+    const imageOverlay = document.getElementById('image-overlay');
+    const overlayImage = document.getElementById('overlay-image');
+    const giftBox = document.getElementById('gift-box');
     let isMuted = false;
     let interactivesHidden = false;
 
     // 设置音量
     bgm.volume = 0.2;
-    clickSfx.volume = 0.3;
+    clickSfx.volume = 0.1;
+    lightSfx.volume = 0.6;
 
     // 静音按钮事件
     muteBtn.addEventListener('click', () => {
         isMuted = !isMuted;
         bgm.muted = isMuted;
         clickSfx.muted = isMuted;
+        lightSfx.muted = isMuted;
         muteBtn.textContent = isMuted ? '🔇' : '🔊';
     });
 
@@ -228,8 +283,28 @@ window.onload = () => {
         lightSwitch.addEventListener('click', () => {
             const container = document.getElementById('game-container');
             container.classList.remove('dimmed');
+            if (!isMuted) {
+                lightSfx.currentTime = 0;
+                lightSfx.play();
+            }
             showDialogue("打开了灯，房间恢复明亮。");
         });
+
+    // 礼物盒互动：显示图片并模糊背景
+    giftBox.addEventListener('click', () => {
+        if (overlayImage && imageOverlay) {
+            overlayImage.src = 'assets/Picture/gift.png';
+            imageOverlay.classList.remove('hidden');
+            document.body.classList.add('image-open');
+        }
+    });
+
+    // 点击覆盖层关闭图片并恢复背景
+    imageOverlay.addEventListener('click', () => {
+        imageOverlay.classList.add('hidden');
+        document.body.classList.remove('image-open');
+        overlayImage.src = '';
+    });
 
     // 鼠标点击音效
     document.body.addEventListener('click', () => {

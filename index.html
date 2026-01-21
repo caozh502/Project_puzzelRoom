@@ -12,6 +12,7 @@
             <div class="label">客厅</div>
             <div id="wardrobe" class="interactive-obj">衣柜</div>
             <div id="monitor" class="interactive-obj">显示器</div>
+            <div id="gift-box" class="interactive-obj">礼物盒</div>
             <div id="light-switch" class="interactive-obj">开灯</div>
             <button class="nav-btn" onclick="goToScene('bedroom')">去卧室 ⮕</button>
         </div>
@@ -42,6 +43,7 @@
         <!-- 音频元素 -->
         <audio id="bgm" src="assets/Audio/MainMenu_BGM.mp3"></audio>
         <audio id="click-sfx" src="assets/Audio/mouseClick_SFX.mp3"></audio>
+        <audio id="light-sfx" src="assets/Audio/lightOn_SFX.mp3"></audio>
         
         <!-- 静音按钮 -->
         <div id="mute-btn">🔊</div>
@@ -51,6 +53,11 @@
 
         <!-- 梦境转场覆盖层（启动时黑屏+淡出） -->
         <div id="dream-overlay"></div>
+
+        <!-- 图片展示覆盖层（显示礼物等图片时） -->
+        <div id="image-overlay" class="hidden">
+            <img id="overlay-image" alt="overlay">
+        </div>
     </div>
 
     <script src="script.js"></script>
