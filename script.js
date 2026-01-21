@@ -1,3 +1,22 @@
+// --- 梦境开场封装 ---
+function startDreamIntro(container, overlay, onUnblurEnd) {
+    if (!container || !overlay) return;
+    // 显示覆盖层并启动眨眼动画
+    overlay.classList.remove('hidden');
+    container.classList.add('dreaming');
+    overlay.classList.add('blink');
+    // 覆盖层动画结束后移除自身
+    overlay.addEventListener('animationend', () => {
+        overlay.remove();
+    }, { once: true });
+    // 去模糊动画结束后移除 dreaming 并触发回调
+    container.addEventListener('animationend', (e) => {
+        if (e.animationName === 'dreamUnblur') {
+            container.classList.remove('dreaming');
+            if (typeof onUnblurEnd === 'function') onUnblurEnd();
+        }
+    }, { once: true });
+}
 // 这是一个点击式解谜游戏，通过显示/隐藏 .scene 类来切换房间，通过 showDialogue 函数显示对话。
 const gameState = {
     inventory: [],
@@ -15,7 +34,7 @@ let imgWidth, imgHeight;
 let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 调试开关：禁用梦境开场（眨眼+去模糊）
-const ENABLE_DREAM_INTRO = false;
+const ENABLE_DREAM_INTRO = true;
 
 const updatePositions = () => {
     if (!imgWidth || !imgHeight) return; // 图片未加载
@@ -157,10 +176,17 @@ diagBox.addEventListener('click', () => {
         }
         document.body.classList.remove('image-open');
         if (overlayImage) overlayImage.src = '';
+        // 退出仅光点模式
+        document.body.classList.remove('intro');
         // 进入客厅场景，并设置为未开灯（昏暗）状态
         goToScene('livingroom');
         const container = document.getElementById('game-container');
         if (container) container.classList.add('dimmed');
+        // 在切换到客厅后启动梦境开场效果（眨眼 + 去模糊）
+        const overlay = document.getElementById('dream-overlay');
+        if (ENABLE_DREAM_INTRO && container && overlay) {
+            startDreamIntro(container, overlay);
+        }
         // 移除开始光点
         if (startDot) startDot.remove();
         introPhase = false;
@@ -215,23 +241,15 @@ window.onload = () => {
     // 启动：根据开关选择是否执行梦境开场
     const container = document.getElementById('game-container');
     const overlay = document.getElementById('dream-overlay');
-    if (ENABLE_DREAM_INTRO && container && overlay) {
+        // 仅当非引导阶段时才在启动应用梦境开场效果
+        if (ENABLE_DREAM_INTRO && container && overlay && !introPhase) {
         container.classList.add('dimmed');
-        container.classList.add('dreaming');
-        overlay.classList.add('blink');
-        overlay.addEventListener('animationend', () => {
-            overlay.remove();
-        });
-        container.addEventListener('animationend', (e) => {
-            if (e.animationName === 'dreamUnblur') {
-                container.classList.remove('dreaming');
+            startDreamIntro(container, overlay, () => {
                 showDialogue("我刚刚还躺在床上，怎么现在在客厅里了？房间好昏暗……");
                 showDialogue("让我找找开灯的开关吧。");
-            }
-        });
+            });
     } else {
-        // 禁用梦境开场：移除眨眼覆盖层，不主动进入任何场景
-        if (overlay) overlay.remove();
+            // 启动时不应用梦境开场：保留覆盖层以备后续使用
         if (container) {
             container.classList.remove('dreaming');
             // 初始不强制昏暗，因为还未进入场景
@@ -347,8 +365,7 @@ window.onload = () => {
     startDot.addEventListener('click', () => {
         // 停止光点音效
         if (startDotSfx) { startDotSfx.pause(); startDotSfx.currentTime = 0; }
-        // 退出仅光点模式，允许显示对话框与覆盖层
-        document.body.classList.remove('intro');
+        // 保持仅光点模式，直到对话关闭后再进入场景与梦境效果
         if (overlayImage && imageOverlay) {
             overlayImage.src = 'assets/Picture/gift.png';
             imageOverlay.classList.remove('hidden');
