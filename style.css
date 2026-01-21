@@ -124,6 +124,30 @@ body {
     border-radius: 5px;
 }
 
+/* 隐藏互动框切换按钮 */
+#hide-btn {
+    position: absolute;
+    bottom: 20px;
+    right: 70px; /* 靠近右下角，避免与静音按钮重叠 */
+    font-size: 20px;
+    cursor: pointer;
+    color: white;
+    background: rgba(0,0,0,0.5);
+    padding: 10px;
+    border-radius: 5px;
+    z-index: 200; /* 高于互动点和对话框 */
+}
+
+/* 隐藏互动框但保留可点击性 */
+.hide-interactives .interactive-obj {
+    opacity: 0;
+}
+
+/* 可选：隐藏调试信息（不影响交互） */
+.hide-interactives .debug-info {
+    opacity: 0;
+}
+
 .hidden { display: none !important; }
 
 /* 调试信息样式 */

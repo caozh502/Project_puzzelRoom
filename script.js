@@ -167,7 +167,9 @@ window.onload = () => {
     const bgm = document.getElementById('bgm');
     const clickSfx = document.getElementById('click-sfx');
     const muteBtn = document.getElementById('mute-btn');
+    const hideBtn = document.getElementById('hide-btn');
     let isMuted = false;
+    let interactivesHidden = false;
 
     // 设置音量
     bgm.volume = 0.2;
@@ -179,6 +181,15 @@ window.onload = () => {
         bgm.muted = isMuted;
         clickSfx.muted = isMuted;
         muteBtn.textContent = isMuted ? '🔇' : '🔊';
+    });
+
+    // 隐藏互动框按钮事件（保持点击有效）
+    hideBtn.addEventListener('click', () => {
+        interactivesHidden = !interactivesHidden;
+        document.body.classList.toggle('hide-interactives', interactivesHidden);
+        // 图标：显示状态切换
+        hideBtn.textContent = interactivesHidden ? '🙈' : '👁️';
+        hideBtn.title = interactivesHidden ? '显示互动框' : '隐藏互动框';
     });
 
     // 鼠标点击音效
