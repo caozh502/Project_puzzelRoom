@@ -113,7 +113,7 @@ body {
     padding: 20px;
     box-sizing: border-box;
     cursor: pointer;
-    z-index: 100;
+    z-index: 500; /* 高于图片覆盖层，确保可点击 */
 }
 
 #char-name {
@@ -242,3 +242,32 @@ body {
 body.image-open #game-container.dimmed .scene.active {
     filter: blur(12px) brightness(0.3) saturate(0.5);
 }
+
+/* 开始闪烁光点样式 */
+.start-dot {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 14px;
+    height: 14px;
+    background: #ffffff;
+    border-radius: 50%;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 24px rgba(255, 255, 255, 0.6);
+    animation: pulse 3s ease-in-out infinite;
+    cursor: pointer;
+    z-index: 350;
+}
+
+@keyframes pulse {
+    0% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.9); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+    100% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.9); }
+}
+
+/* 引导阶段：仅显示光点，隐藏其他界面元素 */
+body.intro #mute-btn,
+body.intro #hide-btn,
+body.intro #inventory-display,
+body.intro #dream-overlay,
+body.intro .scene { display: none !important; }

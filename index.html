@@ -8,7 +8,7 @@
 </head>
 <body>
     <div id="game-container">
-        <div id="scene-livingroom" class="scene active">
+        <div id="scene-livingroom" class="scene">
             <div class="label">客厅</div>
             <div id="wardrobe" class="interactive-obj">衣柜</div>
             <div id="monitor" class="interactive-obj">显示器</div>
@@ -44,6 +44,7 @@
         <audio id="bgm" src="assets/Audio/MainMenu_BGM.mp3"></audio>
         <audio id="click-sfx" src="assets/Audio/mouseClick_SFX.mp3"></audio>
         <audio id="light-sfx" src="assets/Audio/lightOn_SFX.mp3"></audio>
+        <audio id="startdot-sfx" src="assets/Audio/startDot_SFX.mp3" autoplay loop></audio>
         
         <!-- 静音按钮 -->
         <div id="mute-btn">🔊</div>
@@ -58,6 +59,9 @@
         <div id="image-overlay" class="hidden">
             <img id="overlay-image" alt="overlay">
         </div>
+
+        <!-- 开始闪烁光点（点击开始） -->
+        <div id="start-dot" class="start-dot" title="点击开始"></div>
     </div>
 
     <script src="script.js"></script>

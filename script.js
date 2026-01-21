@@ -11,6 +11,9 @@ const gameState = {
 let typingTimer = null;
 
 let imgWidth, imgHeight;
+// 引导阶段标记与全局元素引用
+let introPhase = true;
+let imageOverlay, overlayImage, startDot;
 // 调试开关：禁用梦境开场（眨眼+去模糊）
 const ENABLE_DREAM_INTRO = false;
 
@@ -145,6 +148,23 @@ diagBox.addEventListener('click', () => {
     }
     // 否则关闭对话框
     diagBox.classList.add('hidden');
+
+    // 引导阶段：当文本框消失后，进入客厅场景，并结束引导
+    if (introPhase) {
+        // 关闭图片覆盖层与模糊
+        if (imageOverlay) {
+            imageOverlay.classList.add('hidden');
+        }
+        document.body.classList.remove('image-open');
+        if (overlayImage) overlayImage.src = '';
+        // 进入客厅场景，并设置为未开灯（昏暗）状态
+        goToScene('livingroom');
+        const container = document.getElementById('game-container');
+        if (container) container.classList.add('dimmed');
+        // 移除开始光点
+        if (startDot) startDot.remove();
+        introPhase = false;
+    }
 });
 
 // --- 场景切换 ---
@@ -189,6 +209,9 @@ function updateInventory() {
 
 // 开场白
 window.onload = () => {
+    // 引导阶段：仅显示闪烁光点
+    document.body.classList.add('intro');
+
     // 启动：根据开关选择是否执行梦境开场
     const container = document.getElementById('game-container');
     const overlay = document.getElementById('dream-overlay');
@@ -207,14 +230,13 @@ window.onload = () => {
             }
         });
     } else {
-        // 调试：禁用梦境开场，但保持昏暗效果不受影响
+        // 禁用梦境开场：移除眨眼覆盖层，不主动进入任何场景
         if (overlay) overlay.remove();
         if (container) {
             container.classList.remove('dreaming');
-            container.classList.add('dimmed');
+            // 初始不强制昏暗，因为还未进入场景
+            container.classList.remove('dimmed');
         }
-        showDialogue("我刚刚还躺在床上，怎么现在在客厅里了？房间好昏暗……");
-        showDialogue("让我找找开灯的开关吧。");
     }
     
     // 获取图片尺寸并调整物品位置
@@ -247,11 +269,13 @@ window.onload = () => {
     const bgm = document.getElementById('bgm');
     const clickSfx = document.getElementById('click-sfx');
     const lightSfx = document.getElementById('light-sfx');
+    const startDotSfx = document.getElementById('startdot-sfx');
     const muteBtn = document.getElementById('mute-btn');
     const hideBtn = document.getElementById('hide-btn');
     const lightSwitch = document.getElementById('light-switch');
-    const imageOverlay = document.getElementById('image-overlay');
-    const overlayImage = document.getElementById('overlay-image');
+    imageOverlay = document.getElementById('image-overlay');
+    overlayImage = document.getElementById('overlay-image');
+    startDot = document.getElementById('start-dot');
     const giftBox = document.getElementById('gift-box');
     let isMuted = false;
     let interactivesHidden = false;
@@ -260,6 +284,7 @@ window.onload = () => {
     bgm.volume = 0.2;
     clickSfx.volume = 0.1;
     lightSfx.volume = 0.6;
+    startDotSfx.volume = 0.5;
 
     // 静音按钮事件
     muteBtn.addEventListener('click', () => {
@@ -267,8 +292,13 @@ window.onload = () => {
         bgm.muted = isMuted;
         clickSfx.muted = isMuted;
         lightSfx.muted = isMuted;
+        startDotSfx.muted = isMuted;
         muteBtn.textContent = isMuted ? '🔇' : '🔊';
     });
+    // 开始光点音效：引导阶段循环播放，点击后停止
+    if (introPhase && !isMuted) {
+        try { startDotSfx.play(); } catch (_) {}
+    }
 
     // 隐藏互动框按钮事件（保持点击有效）
     hideBtn.addEventListener('click', () => {
@@ -312,5 +342,18 @@ window.onload = () => {
             clickSfx.currentTime = 0;
             clickSfx.play();
         }
+    });
+    // 引导光点点击：展示礼物图片与引导文本
+    startDot.addEventListener('click', () => {
+        // 停止光点音效
+        if (startDotSfx) { startDotSfx.pause(); startDotSfx.currentTime = 0; }
+        // 退出仅光点模式，允许显示对话框与覆盖层
+        document.body.classList.remove('intro');
+        if (overlayImage && imageOverlay) {
+            overlayImage.src = 'assets/Picture/gift.png';
+            imageOverlay.classList.remove('hidden');
+            document.body.classList.add('image-open');
+        }
+        showDialogue("等了你好久了，这是开启未来的钥匙……");
     });
 };
