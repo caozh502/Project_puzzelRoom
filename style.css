@@ -91,13 +91,19 @@ body {
 
 /* 导航按钮 */
 .nav-btn {
-    position: absolute;
-    bottom: 120px;
-    padding: 10px 20px;
-    cursor: pointer;
+    position: absolute; /* 核心：允许通过 top/left 指定位置 */
+    padding: 1px 1px;
+    background: rgba(255, 255, 255, 0.3);
+    border: 3px solid #911818;
+    border-radius: 0px;
+    color: white;
+    cursor: default;
+    transform: translate(-50%, -50%); /* 确保坐标点位于物品中心 */
+    font-size: 10px;
 }
-.nav-btn.left { left: 20px; }
-.nav-btn.right { right: 20px; }
+.nav-btn:hover {
+    background: rgba(255,255,255,0.4);
+}
 
 /* 对话框 */
 #dialogue-box {
@@ -209,8 +215,8 @@ body {
 /* 眨眼效果：快速开合一次后淡出到透明 */
 @keyframes blinkFade {
     0% { opacity: 1; }
-    12% { opacity: 0; }  /* 眼睛快速睁开 */
-    24% { opacity: 1; }  /* 再次眨眼合上 */
+    30% { opacity: 0; }  /* 眼睛快速睁开 */
+    50% { opacity: 1; }  /* 再次眨眼合上 */
     100% { opacity: 0; } /* 淡出到透明 */
 }
 
@@ -257,6 +263,7 @@ body.image-open #game-container.dimmed .scene.active {
     animation: pulse 3s ease-in-out infinite;
     cursor: pointer;
     z-index: 350;
+    /* display: none !important; */
 }
 
 @keyframes pulse {
@@ -271,3 +278,13 @@ body.intro #hide-btn,
 body.intro #inventory-display,
 body.intro #dream-overlay,
 body.intro .scene { display: none !important; }
+
+/* Intro淡出效果 */
+body.fade-out {
+    animation: fadeOutIntro 2s ease-out forwards;
+}
+
+@keyframes fadeOutIntro {
+    from { opacity: 1; }
+    to { opacity: 0; }
+}

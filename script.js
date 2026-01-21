@@ -1,3 +1,26 @@
+// 这是一个点击式解谜游戏，通过显示/隐藏 .scene 类来切换房间，通过 showDialogue 函数显示对话。
+const gameState = {
+    inventory: [],
+    currentText: "",
+    isTyping: false,
+    dialogueQueue: [],
+    justCompleted: false
+};
+
+// 记录打字计时器以便可取消
+let typingTimer = null;
+
+let imgWidth, imgHeight;
+// 引导阶段标记与全局元素引用
+let introPhase = true;
+let imageOverlay, overlayImage, startDot;
+// 音频变量
+let bgm, clickSfx, lightSfx, startDotSfx, wakeUpSfx;
+// 其他UI变量
+let muteBtn, hideBtn, lightSwitch, giftBox, isMuted, interactivesHidden;
+// 调试开关：禁用梦境开场（眨眼+去模糊）
+const ENABLE_DREAM_INTRO = true;
+
 // --- 梦境开场封装 ---
 function startDreamIntro(container, overlay, onUnblurEnd) {
     if (!container || !overlay) return;
@@ -17,24 +40,6 @@ function startDreamIntro(container, overlay, onUnblurEnd) {
         }
     }, { once: true });
 }
-// 这是一个点击式解谜游戏，通过显示/隐藏 .scene 类来切换房间，通过 showDialogue 函数显示对话。
-const gameState = {
-    inventory: [],
-    currentText: "",
-    isTyping: false,
-    dialogueQueue: [],
-    justCompleted: false
-};
-
-// 记录打字计时器以便可取消
-let typingTimer = null;
-
-let imgWidth, imgHeight;
-// 引导阶段标记与全局元素引用
-let introPhase = true;
-let imageOverlay, overlayImage, startDot;
-// 调试开关：禁用梦境开场（眨眼+去模糊）
-const ENABLE_DREAM_INTRO = true;
 
 const updatePositions = () => {
     if (!imgWidth || !imgHeight) return; // 图片未加载
@@ -54,7 +59,11 @@ const updatePositions = () => {
         'green-cabinet': { padding: '1.5%', top: '70%', left: '20%' },
         'plant': { padding: '1.5%', top: '60%', left: '80%' },
         'washer': { padding: '1.5%', top: '50%', left: '85%' },
-        'light-switch': { padding: '0.5% 0.5%', top: '52%', left: '63%' }
+        'light-switch': { padding: '0.5% 0.5%', top: '52%', left: '63%' },
+        'doorToBedroomFromLivingroom': { padding: '10% 10%', top: '30%', left: '5%' },
+        'doorToLivingroom': { padding: '10% 10%', top: '30%', left: '5%' },
+        'doorToBalcony': { padding: '10% 10%', top: '30%', left: '85%' },
+        'doorToBedroomFromBalcony': { padding: '10% 10%', top: '30%', left: '5%' }
     };
     
     // 计算图片显示参数 
@@ -168,7 +177,7 @@ diagBox.addEventListener('click', () => {
     // 否则关闭对话框
     diagBox.classList.add('hidden');
 
-    // 引导阶段：当文本框消失后，进入客厅场景，并结束引导
+    // 引导阶段：当文本框消失后，淡出intro场景2秒，然后进入客厅场景，并结束引导
     if (introPhase) {
         // 关闭图片覆盖层与模糊
         if (imageOverlay) {
@@ -176,8 +185,19 @@ diagBox.addEventListener('click', () => {
         }
         document.body.classList.remove('image-open');
         if (overlayImage) overlayImage.src = '';
-        // 退出仅光点模式
+        // 移除开始光点
+        if (startDot) startDot.remove();
+        // 播放唤醒音效
+        if (wakeUpSfx && !isMuted) {
+            wakeUpSfx.currentTime = 0;
+            wakeUpSfx.play();
+        }
+        // 添加淡出效果
+        document.body.classList.add('fade-out');
+        // 2秒后进入客厅
+
         document.body.classList.remove('intro');
+        document.body.classList.remove('fade-out');
         // 进入客厅场景，并设置为未开灯（昏暗）状态
         goToScene('livingroom');
         const container = document.getElementById('game-container');
@@ -187,9 +207,8 @@ diagBox.addEventListener('click', () => {
         if (ENABLE_DREAM_INTRO && container && overlay) {
             startDreamIntro(container, overlay);
         }
-        // 移除开始光点
-        if (startDot) startDot.remove();
         introPhase = false;
+
     }
 });
 
@@ -236,27 +255,8 @@ function updateInventory() {
 // 开场白
 window.onload = () => {
     // 引导阶段：仅显示闪烁光点
-    document.body.classList.add('intro');
+    // document.body.classList.add('intro');
 
-    // 启动：根据开关选择是否执行梦境开场
-    const container = document.getElementById('game-container');
-    const overlay = document.getElementById('dream-overlay');
-        // 仅当非引导阶段时才在启动应用梦境开场效果
-        if (ENABLE_DREAM_INTRO && container && overlay && !introPhase) {
-        container.classList.add('dimmed');
-            startDreamIntro(container, overlay, () => {
-                showDialogue("我刚刚还躺在床上，怎么现在在客厅里了？房间好昏暗……");
-                showDialogue("让我找找开灯的开关吧。");
-            });
-    } else {
-            // 启动时不应用梦境开场：保留覆盖层以备后续使用
-        if (container) {
-            container.classList.remove('dreaming');
-            // 初始不强制昏暗，因为还未进入场景
-            container.classList.remove('dimmed');
-        }
-    }
-    
     // 获取图片尺寸并调整物品位置
     const img = new Image();
     img.src = 'assets/Picture/room.png';
@@ -283,27 +283,28 @@ window.onload = () => {
         }
     }, true);
 
-    // 音频控制
-    const bgm = document.getElementById('bgm');
-    const clickSfx = document.getElementById('click-sfx');
-    const lightSfx = document.getElementById('light-sfx');
-    const startDotSfx = document.getElementById('startdot-sfx');
-    const muteBtn = document.getElementById('mute-btn');
-    const hideBtn = document.getElementById('hide-btn');
-    const lightSwitch = document.getElementById('light-switch');
+    // 相关变量和事件监听器
+    bgm = document.getElementById('bgm');
+    clickSfx = document.getElementById('click-sfx');
+    lightSfx = document.getElementById('light-sfx');
+    startDotSfx = document.getElementById('startdot-sfx');
+    wakeUpSfx = document.getElementById('wake-up-sfx');
+    muteBtn = document.getElementById('mute-btn');
+    hideBtn = document.getElementById('hide-btn');
+    lightSwitch = document.getElementById('light-switch');
     imageOverlay = document.getElementById('image-overlay');
     overlayImage = document.getElementById('overlay-image');
     startDot = document.getElementById('start-dot');
-    const giftBox = document.getElementById('gift-box');
-    let isMuted = false;
-    let interactivesHidden = false;
+    giftBox = document.getElementById('gift-box');
+    isMuted = false;
+    interactivesHidden = false;
 
     // 设置音量
     bgm.volume = 0.2;
     clickSfx.volume = 0.1;
     lightSfx.volume = 0.6;
-    startDotSfx.volume = 0.5;
-
+    startDotSfx.volume = 0.1; //暂时静音
+    wakeUpSfx.volume = 0.5;
     // 静音按钮事件
     muteBtn.addEventListener('click', () => {
         isMuted = !isMuted;
@@ -311,6 +312,7 @@ window.onload = () => {
         clickSfx.muted = isMuted;
         lightSfx.muted = isMuted;
         startDotSfx.muted = isMuted;
+        wakeUpSfx.muted = isMuted;
         muteBtn.textContent = isMuted ? '🔇' : '🔊';
     });
     // 开始光点音效：引导阶段循环播放，点击后停止
