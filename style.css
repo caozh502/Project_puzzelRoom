@@ -29,6 +29,9 @@ body {
 }
 
 /* 场景颜色区分 */
+#scene-intro {
+    background-color: #000;
+}
 #scene-livingroom { 
     background-image: url('assets/Picture/room.png');
     background-size: contain;
@@ -271,13 +274,6 @@ body.image-open #game-container.dimmed .scene.active {
     50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
     100% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.9); }
 }
-
-/* 引导阶段：仅显示光点，隐藏其他界面元素 */
-body.intro #mute-btn,
-body.intro #hide-btn,
-body.intro #inventory-display,
-body.intro #dream-overlay,
-body.intro .scene { display: none !important; }
 
 /* Intro淡出效果 */
 body.fade-out {

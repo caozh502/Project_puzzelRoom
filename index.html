@@ -8,6 +8,11 @@
 </head>
 <body>
     <div id="game-container">
+        <div id="scene-intro" class="scene active">
+            <!-- 开始闪烁光点（点击开始） -->
+            <div id="start-dot" class="start-dot" title="点击开始"></div>
+        </div>
+
         <div id="scene-livingroom" class="scene">
             <div class="label">客厅</div>
             <div id="wardrobe" class="interactive-obj">衣柜</div>
@@ -46,6 +51,8 @@
         <audio id="light-sfx" src="assets/Audio/lightOn_SFX.mp3"></audio>
         <audio id="startdot-sfx" src="assets/Audio/startDot_SFX.mp3"></audio>
         <audio id="wake-up-sfx" src="assets/Audio/wakeUp_SFX.mp3"></audio>
+        <audio id="door-open-sfx" src="assets/Audio/doorOpen_SFX.mp3"></audio>
+        <audio id="footsteps-sfx" src="assets/Audio/footSteps_SFX.mp3"></audio>
         
         <!-- 静音按钮 -->
         <div id="mute-btn">🔊</div>
@@ -61,10 +68,9 @@
             <img id="overlay-image" alt="overlay">
         </div>
 
-        <!-- 开始闪烁光点（点击开始） -->
-        <div id="start-dot" class="start-dot" title="点击开始"></div>
     </div>
 
+    <script src="data/scenes.js"></script>
     <script src="script.js"></script>
 </body>
 </html>
