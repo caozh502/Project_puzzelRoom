@@ -34,7 +34,7 @@ window.GAME_CONFIG = {
             id: 'livingroom',
             background: {
                 type: 'image',
-                value: 'assets/Picture/room.png',
+                value: 'assets/Picture/livingroom.png',
                 size: '100% 100%',
                 position: 'center',
                 repeat: 'no-repeat'
