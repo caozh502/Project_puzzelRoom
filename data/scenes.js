@@ -1,13 +1,14 @@
 // 数据驱动配置：场景、交互文本、物品位置
 window.GAME_CONFIG = {
     startScene: 'intro',
+    introEndScene: 'bedroom',
     initialState: {
         inventory: [],
         flags: {},
         visitedScenes: {}
     },
     audio: {
-        bgm: { volume: 0.2, loop: false, autoplay: false },
+        bgm: { volume: 0.2, loop: true, autoplay: false },
         clickSfx: { volume: 0.1 },
         lightSfx: { volume: 0.6 },
         startDotSfx: { volume: 0.1, loop: false },

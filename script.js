@@ -6,10 +6,13 @@ const SCENE_CONFIGS = CONFIG.scenes || {};
 const START_SCENE = CONFIG.startScene || 'intro';
 const AUDIO_CONFIGS = CONFIG.audio || {};
 const INITIAL_STATE = CONFIG.initialState || {};
+const INTRO_END_SCENE = CONFIG.introEndScene || 'bedroom';
 
 const DIALOGUE_SPEED = 50;
 // 调试开关：禁用梦境开场（眨眼+去模糊）
-const ENABLE_DREAM_INTRO = true;
+const ENABLE_DREAM_INTRO = false;
+// 调试开关：跳过 intro 场景
+const ENABLE_INTRO_SCENE = false;
 
 const gameState = {
     inventory: [],
@@ -208,6 +211,11 @@ function handleIntroComplete() {
     document.body.classList.remove('image-open');
     if (overlayImage) overlayImage.src = '';
 
+    if (!ENABLE_DREAM_INTRO) {
+        const overlay = document.getElementById('dream-overlay');
+        if (overlay) overlay.classList.add('hidden');
+    }
+
     // 播放唤醒音效
     playSfx(wakeUpSfx);
 
@@ -216,7 +224,7 @@ function handleIntroComplete() {
     // 2秒后进入客厅
     setTimeout(() => {
         document.body.classList.remove('fade-out');
-        goToScene('livingroom');
+        goToScene(INTRO_END_SCENE);
         const container = document.getElementById('game-container');
         if (container) container.classList.add('dimmed');
         // 在切换到客厅后启动梦境开场效果（眨眼 + 去模糊）
@@ -433,6 +441,20 @@ function initInteractions() {
 }
 
 function initIntroScene() {
+    if (!ENABLE_INTRO_SCENE) {
+        introPhase = false;
+        goToScene(INTRO_END_SCENE);
+        const container = document.getElementById('game-container');
+        if (container) container.classList.add('dimmed');
+        const overlay = document.getElementById('dream-overlay');
+        if (ENABLE_DREAM_INTRO && container && overlay) {
+            startDreamIntro(container, overlay);
+        } else if (overlay) {
+            overlay.classList.add('hidden');
+        }
+        return;
+    }
+
     goToScene(START_SCENE);
     if (introPhase && !isMuted && startDotSfx) {
         try { startDotSfx.play(); } catch (_) {}
