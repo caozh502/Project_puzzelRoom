@@ -42,6 +42,14 @@ window.GAME_CONFIG = {
                 repeat: 'no-repeat'
             }
         },
+        hallway: {
+            id: 'hallway',
+            background: { type: 'color', value: '#c9ada7' }
+        },
+        study: {
+            id: 'study',
+            background: { type: 'color', value: '#c9ada7' }
+        },
         balcony: {
             id: 'balcony',
             background: { type: 'color', value: '#c9ada7' }
@@ -51,22 +59,28 @@ window.GAME_CONFIG = {
         wardrobe: { padding: '9% 8%', top: '50%', left: '80%' },
         monitor: { padding: '2% 4%', top: '58%', left: '13%' },
         'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
-        'trash-can': { padding: '1.5%', top: '80%', left: '15%' },
-        'green-cabinet': { padding: '1.5%', top: '70%', left: '20%' },
-        plant: { padding: '1.5%', top: '60%', left: '80%' },
-        washer: { padding: '1.5%', top: '50%', left: '85%' },
+        'couple-photo': { padding: '1.5%', top: '80%', left: '15%' },
+        'vanity-table': { padding: '1.5%', top: '70%', left: '20%' },
+        'potted-plant': { padding: '1.5%', top: '60%', left: '80%' },
+        'balcony-chair': { padding: '1.5%', top: '50%', left: '85%' },
+        'bbq-grill': { padding: '1.5%', top: '70%', left: '60%' },
         'light-switch': { padding: '0.5% 0.5%', top: '47.5%', left: '18%' },
-        doorToBedroomFromLivingroom: { padding: '10% 10%', top: '30%', left: '5%' },
-        doorToLivingroom: { padding: '10% 10%', top: '30%', left: '5%' },
-        doorToBalcony: { padding: '10% 10%', top: '30%', left: '85%' },
-        doorToBedroomFromBalcony: { padding: '10% 10%', top: '30%', left: '5%' }
+        doorToHallwayFromLivingroom: { padding: '10% 10%', top: '30%', left: '5%' },
+        doorToHallwayFromBedroom: { padding: '10% 10%', top: '30%', left: '5%' },
+        doorToLivingroomFromHallway: { padding: '10% 10%', top: '30%', left: '5%' },
+        doorToBedroomFromHallway: { padding: '10% 10%', top: '30%', left: '45%' },
+        doorToStudyFromHallway: { padding: '10% 10%', top: '30%', left: '85%' },
+        doorToHallwayFromStudy: { padding: '10% 10%', top: '30%', left: '5%' },
+        doorToBalconyFromStudy: { padding: '10% 10%', top: '30%', left: '85%' },
+        doorToStudyFromBalcony: { padding: '10% 10%', top: '30%', left: '5%' }
     },
     interactions: [
         { id: 'wardrobe', text: '衣柜里放满了衣服，看起来很整洁。' },
         { id: 'monitor', text: '显示器屏幕上显示着一些代码。' },
-        { id: 'trash-can', text: '在废纸篓里翻了很久，找到了住宅平面图！' },
-        { id: 'green-cabinet', text: '绿色柜子里有一些旧书。' },
-        { id: 'plant', text: '阳台上的植物看起来需要浇水。' },
-        { id: 'washer', text: '洗衣机里有一些待洗的衣服。' }
+        { id: 'couple-photo', text: '这张合照里有很多美好的回忆。' },
+        { id: 'vanity-table', text: '梳妆台上摆着一些饰品。' },
+        { id: 'potted-plant', text: '盆栽长势不错，叶子很有精神。' },
+        { id: 'balcony-chair', text: '藤椅很适合在阳台上发呆。' },
+        { id: 'bbq-grill', text: '烧烤炉还留着一股炭火味。' }
     ]
 };

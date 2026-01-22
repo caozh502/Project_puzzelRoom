@@ -15,32 +15,43 @@
 
         <div id="scene-livingroom" class="scene">
             <div class="label">客厅</div>
-            <div id="monitor" class="interactive-obj">显示器</div>
             <div id="gift-box" class="interactive-obj">礼物盒</div>
-            <button class="nav-btn" id="doorToBedroomFromLivingroom" onclick="goToScene('bedroom')">去卧室 ⮕</button>
+            <button class="nav-btn" id="doorToHallwayFromLivingroom" onclick="goToScene('hallway')">去走廊 ⮕</button>
         </div>
 
         <div id="scene-bedroom" class="scene">
             <div class="label">卧室</div>
             <div id="wardrobe" class="interactive-obj">衣柜</div>
-            <div id="trash-can" class="interactive-obj">废纸篓</div>
-            <div id="green-cabinet" class="interactive-obj">绿色柜子</div>
+            <div id="couple-photo" class="interactive-obj">合照</div>
+            <div id="vanity-table" class="interactive-obj">梳妆台</div>
             <div id="light-switch" class="interactive-obj">开灯</div>
-            <button class="nav-btn" id="doorToLivingroom" onclick="goToScene('livingroom')">⬅ 去客厅</button>
-            <button class="nav-btn" id="doorToBalcony" onclick="goToScene('balcony')">去阳台 ⮕</button>
+            <button class="nav-btn" id="doorToHallwayFromBedroom" onclick="goToScene('hallway')">⬅ 去走廊</button>
+        </div>
+
+        <div id="scene-hallway" class="scene">
+            <div class="label">走廊</div>
+            <button class="nav-btn" id="doorToLivingroomFromHallway" onclick="goToScene('livingroom')">⬅ 去客厅</button>
+            <button class="nav-btn" id="doorToBedroomFromHallway" onclick="goToScene('bedroom')">去卧室 ⮕</button>
+            <button class="nav-btn" id="doorToStudyFromHallway" onclick="goToScene('study')">去书房 ⮕</button>
+        </div>
+
+        <div id="scene-study" class="scene">
+            <div class="label">书房</div>
+            <div id="monitor" class="interactive-obj">显示器</div>
+            <button class="nav-btn" id="doorToHallwayFromStudy" onclick="goToScene('hallway')">⬅ 去走廊</button>
+            <button class="nav-btn" id="doorToBalconyFromStudy" onclick="goToScene('balcony')">去阳台 ⮕</button>
         </div>
 
         <div id="scene-balcony" class="scene">
             <div class="label">阳台</div>
-            <div id="plant" class="interactive-obj">植物</div>
-            <div id="washer" class="interactive-obj">洗衣机</div>
-            <button class="nav-btn" id="doorToBedroomFromBalcony" onclick="goToScene('bedroom')">⬅ 去卧室</button>
+            <div id="potted-plant" class="interactive-obj">盆栽</div>
+            <div id="balcony-chair" class="interactive-obj">藤椅</div>
+            <div id="bbq-grill" class="interactive-obj">烧烤炉</div>
+            <button class="nav-btn" id="doorToStudyFromBalcony" onclick="goToScene('study')">⬅ 去书房</button>
         </div>
 
         <div id="dialogue-box" class="hidden">
-            <div id="char-name">内心</div>
             <div id="dialogue-text"></div>
-            <div class="next-tip">点击继续...</div>
         </div>
 
         <div id="inventory-display">物品栏: 无</div>

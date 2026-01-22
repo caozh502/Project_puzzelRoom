@@ -114,29 +114,32 @@ body {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    width: 90%;
-    height: 120px;
-    background: rgba(0, 0, 0, 0.8);
-    border: 2px solid #fff;
-    color: white;
+    width: 80%;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.95);
+    border: 5px solid #9ad0ff;
+    color: #689cd1;
     padding: 20px;
     box-sizing: border-box;
     cursor: pointer;
     z-index: 500; /* 高于图片覆盖层，确保可点击 */
+    font-size: large;
+    display: flex;
+    align-items: center;
+    box-shadow: 6px 6px 0 rgba(0, 0, 0, 0.6);
 }
 
-#char-name {
-    color: #ffb703;
-    font-weight: bold;
-    margin-bottom: 10px;
+#dialogue-text {
+    display: inline;
 }
 
-.next-tip {
-    position: absolute;
-    right: 20px;
-    bottom: 10px;
-    font-size: 12px;
-    opacity: 0.6;
+#dialogue-text::after {
+    content: "▼";
+    display: inline-block;
+    margin-left: 6px;
+    font-size: 0.9em;
+    color: inherit;
+    opacity: 0.8;
 }
 
 #inventory-display {
@@ -176,6 +179,11 @@ body {
 
 /* 隐藏互动框但保留可点击性 */
 .hide-interactives .interactive-obj {
+    opacity: 0;
+}
+
+/* 导航按钮同样隐藏但保留可点击性 */
+.hide-interactives .nav-btn {
     opacity: 0;
 }
 
