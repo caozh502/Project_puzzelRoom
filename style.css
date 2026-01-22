@@ -133,7 +133,7 @@ body {
     display: inline;
 }
 
-#dialogue-text::after {
+#dialogue-box.show-next #dialogue-text::after {
     content: "▼";
     display: inline-block;
     margin-left: 6px;
@@ -155,7 +155,7 @@ body {
     position: absolute;
     bottom: 20px;
     right: 20px;
-    font-size: 24px;
+    font-size: 12px;
     cursor: pointer;
     color: white;
     background: rgba(0,0,0,0.5);
@@ -168,7 +168,7 @@ body {
     position: absolute;
     bottom: 20px;
     right: 70px; /* 靠近右下角，避免与静音按钮重叠 */
-    font-size: 20px;
+    font-size: 12px;
     cursor: pointer;
     color: white;
     background: rgba(0,0,0,0.5);

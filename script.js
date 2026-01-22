@@ -5,6 +5,7 @@ const INTERACTIONS = CONFIG.interactions || [];
 const SCENE_CONFIGS = CONFIG.scenes || {};
 const START_SCENE = CONFIG.startScene || 'intro';
 const AUDIO_CONFIGS = CONFIG.audio || {};
+const AUDIO_SOURCES = CONFIG.audioSources || {};
 const INITIAL_STATE = CONFIG.initialState || {};
 const INTRO_END_SCENE = CONFIG.introEndScene || 'bedroom';
 
@@ -26,6 +27,7 @@ const gameState = {
 
 // 记录打字计时器以便可取消
 let typingTimer = null;
+let nextTipTimer = null;
 
 // 引导阶段标记与全局元素引用
 let introPhase = true;
@@ -151,6 +153,12 @@ function updatePositions() {
 function showDialogue(text) {
     if (!diagBox || !diagText) return;
 
+    if (nextTipTimer) {
+        clearTimeout(nextTipTimer);
+        nextTipTimer = null;
+    }
+    diagBox.classList.remove('show-next');
+
     // 若正在打字，则将新文本加入队列，等待当前对话结束或点击继续
     if (gameState.isTyping) {
         gameState.dialogueQueue.push(text);
@@ -174,6 +182,9 @@ function showDialogue(text) {
         } else {
             gameState.isTyping = false;
             typingTimer = null;
+            nextTipTimer = setTimeout(() => {
+                diagBox.classList.add('show-next');
+            }, 250);
         }
     }
     type();
@@ -189,6 +200,12 @@ function completeTypingImmediately() {
         }
         diagText.innerText = gameState.currentText || diagText.innerText;
         gameState.justCompleted = true;
+        if (nextTipTimer) {
+            clearTimeout(nextTipTimer);
+        }
+        nextTipTimer = setTimeout(() => {
+            diagBox.classList.add('show-next');
+        }, 250);
     }
 }
 
@@ -238,6 +255,12 @@ function onDialogueBoxClick() {
             typingTimer = null;
         }
         diagText.innerText = gameState.currentText || diagText.innerText;
+        if (nextTipTimer) {
+            clearTimeout(nextTipTimer);
+        }
+        nextTipTimer = setTimeout(() => {
+            diagBox.classList.add('show-next');
+        }, 500);
         return;
     }
     // 刚刚通过全局点击完成打字：本次点击不关闭，仅复位标记
@@ -253,6 +276,7 @@ function onDialogueBoxClick() {
     }
     // 否则关闭对话框
     diagBox.classList.add('hidden');
+    diagBox.classList.remove('show-next');
 
     // 引导阶段：当文本框消失后，淡出intro场景2秒，然后进入客厅场景，并结束引导
     if (introPhase) {
@@ -335,7 +359,12 @@ function initAudio() {
     Object.keys(audioMap).forEach(key => {
         const el = audioMap[key];
         const cfg = AUDIO_CONFIGS[key];
-        if (!el || !cfg) return;
+        const src = AUDIO_SOURCES[key];
+        if (!el) return;
+        if (typeof src === 'string' && src.length > 0) {
+            el.src = src;
+        }
+        if (!cfg) return;
         if (typeof cfg.volume === 'number') el.volume = cfg.volume;
         if (typeof cfg.loop === 'boolean') el.loop = cfg.loop;
         if (cfg.autoplay) {
