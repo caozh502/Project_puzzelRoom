@@ -27,7 +27,6 @@ const gameState = {
 // 记录打字计时器以便可取消
 let typingTimer = null;
 
-let imgWidth, imgHeight;
 // 引导阶段标记与全局元素引用
 let introPhase = true;
 let imageOverlay, overlayImage, startDot;
@@ -96,8 +95,6 @@ function startDreamIntro(container, overlay, onUnblurEnd) {
 }
 
 function updatePositions() {
-    if (!imgWidth || !imgHeight) return; // 图片未加载
-
     // 删除之前的调试信息
     document.querySelectorAll('.debug-info').forEach(d => d.remove());
 
@@ -105,16 +102,11 @@ function updatePositions() {
     const currentScene = document.querySelector('.scene.active');
     if (!currentScene) return;
 
-    // 计算图片显示参数
+    // 以容器为基准进行定位（背景铺满）
     const container = document.getElementById('game-container');
     if (!container) return;
     const containerWidth = container.clientWidth;
     const containerHeight = container.clientHeight;
-    const scale = Math.min(containerWidth / imgWidth, containerHeight / imgHeight);
-    const displayWidth = imgWidth * scale;
-    const displayHeight = imgHeight * scale;
-    const offsetX = (containerWidth - displayWidth) / 2;
-    const offsetY = (containerHeight - displayHeight) / 2;
 
     // 应用位置
     Object.keys(OBJECT_CONFIGS).forEach(id => {
@@ -124,19 +116,17 @@ function updatePositions() {
         const config = OBJECT_CONFIGS[id];
         const topPercent = parseFloat(config.top) / 100;
         const leftPercent = parseFloat(config.left) / 100;
-        const newTop = topPercent * imgHeight * scale + offsetY;
-        const newLeft = leftPercent * imgWidth * scale + offsetX;
-        const topPct = (newTop / containerHeight) * 100;
-        const leftPct = (newLeft / containerWidth) * 100;
-        el.style.top = `${topPct}%`;
-        el.style.left = `${leftPct}%`;
+        const newTop = topPercent * containerHeight;
+        const newLeft = leftPercent * containerWidth;
+        el.style.top = `${topPercent * 100}%`;
+        el.style.left = `${leftPercent * 100}%`;
 
-        // 解析padding: 'top% right%' -> top/bottom: top% of imgHeight, left/right: right% of imgWidth
+        // 解析padding: 'top% right%' -> top/bottom: top% of 容器高度, left/right: right% of 容器宽度
         const paddingParts = config.padding.split(' ');
         const paddingTopPercent = parseFloat(paddingParts[0]) / 100;
         const paddingRightPercent = parseFloat(paddingParts[1] || paddingParts[0]) / 100;
-        const paddingTop = paddingTopPercent * imgHeight * scale;
-        const paddingRight = paddingRightPercent * imgWidth * scale;
+        const paddingTop = paddingTopPercent * containerHeight;
+        const paddingRight = paddingRightPercent * containerWidth;
         el.style.padding = config.padding;
 
         // 将原文本转移到调试信息：保存在 data-originalText，清空元素内部文本
@@ -321,13 +311,7 @@ function cacheElements() {
 }
 
 function initPositions() {
-    const img = new Image();
-    img.src = 'assets/Picture/room.png';
-    img.onload = () => {
-        imgWidth = img.naturalWidth;
-        imgHeight = img.naturalHeight;
-        updatePositions();
-    };
+    updatePositions();
     window.addEventListener('resize', updatePositions);
 }
 

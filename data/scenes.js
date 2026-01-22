@@ -26,15 +26,21 @@ window.GAME_CONFIG = {
             background: {
                 type: 'image',
                 value: 'assets/Picture/room.png',
-                size: 'contain',
+                size: '100% 100%',
                 position: 'center',
                 repeat: 'no-repeat'
             }
         },
         bedroom: {
             id: 'bedroom',
-            onEnterDialogue: '卧室里乱糟糟的...',
-            background: { type: 'color', value: '#9a8c98' }
+            onEnterDialogue: '好困呀……',
+            background: {
+                type: 'image',
+                value: 'assets/Picture/bedroom.png',
+                size: '100% 100%',
+                position: 'center',
+                repeat: 'no-repeat'
+            }
         },
         balcony: {
             id: 'balcony',
@@ -49,7 +55,7 @@ window.GAME_CONFIG = {
         'green-cabinet': { padding: '1.5%', top: '70%', left: '20%' },
         plant: { padding: '1.5%', top: '60%', left: '80%' },
         washer: { padding: '1.5%', top: '50%', left: '85%' },
-        'light-switch': { padding: '0.5% 0.5%', top: '52%', left: '63%' },
+        'light-switch': { padding: '0.5% 0.5%', top: '47.5%', left: '18%' },
         doorToBedroomFromLivingroom: { padding: '10% 10%', top: '30%', left: '5%' },
         doorToLivingroom: { padding: '10% 10%', top: '30%', left: '5%' },
         doorToBalcony: { padding: '10% 10%', top: '30%', left: '85%' },
