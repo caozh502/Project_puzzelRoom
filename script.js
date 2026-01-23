@@ -291,7 +291,7 @@ function goToScene(sceneId) {
     if (target) target.classList.add('active');
 
     const sceneConfig = SCENE_CONFIGS[sceneId];
-    if (sceneConfig && sceneConfig.onEnterDialogue) {
+    if (sceneConfig && sceneConfig.onEnterDialogue && !gameState.visitedScenes[sceneId]) {
         showDialogue(sceneConfig.onEnterDialogue);
     }
 
@@ -415,9 +415,11 @@ function initUIControls() {
     if (lightSwitch) {
         lightSwitch.addEventListener('click', () => {
             const container = document.getElementById('game-container');
-            if (container) container.classList.remove('dimmed');
+            if (!container) return;
+            const isDimmed = container.classList.contains('dimmed');
+            container.classList.toggle('dimmed', !isDimmed);
             playSfx(lightSfx);
-            showDialogue("打开了灯，房间恢复明亮。");
+            showDialogue(isDimmed ? "打开了灯，房间恢复明亮。" : "关上了灯，房间又暗了下来。");
         });
     }
 

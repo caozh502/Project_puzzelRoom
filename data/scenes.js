@@ -85,7 +85,7 @@ window.GAME_CONFIG = {
         doorToHallwayFromBedroom: { padding: '8% 3%', top: '39%', left: '23%' },
         doorToLivingroomFromHallway: { padding: '47% 10%', top: '54%', left: '90%' },
         doorToBedroomFromHallway: { padding: '3%', top: '96%', left: '49%' },
-        doorToStudyFromHallway: { padding: '29% 3%', top: '53%', left: '26%' },
+        doorToStudyFromHallway: { padding: '20% 3%', top: '53%', left: '26%' },
         doorToHallwayFromStudy: { padding: '8% 3%', top: '39%', left: '23%' },
         doorToBalconyFromStudy: { padding: '10% 10%', top: '30%', left: '85%' },
         doorToStudyFromBalcony: { padding: '10% 10%', top: '30%', left: '5%' }
