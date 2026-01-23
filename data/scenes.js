@@ -70,10 +70,7 @@ window.GAME_CONFIG = {
             id: 'study',
             background: { type: 'color', value: '#c9ada7' }
         },
-        balcony: {
-            id: 'balcony',
-            background: { type: 'color', value: '#c9ada7' }
-        }
+        
     },
     objectConfigs: {
         wardrobe: { padding: '25% 7%', top: '50%', left: '7%' },
@@ -81,7 +78,6 @@ window.GAME_CONFIG = {
         'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
         'landscape-photo': { padding: '10%', top: '39%', left: '40%' },
         'vanity-table': { padding: '10%', top: '68%', left: '88%' },
-        'potted-plant': { padding: '1.5%', top: '60%', left: '80%' },
         'balcony-chair': { padding: '1.5%', top: '50%', left: '85%' },
         'bbq-grill': { padding: '1.5%', top: '70%', left: '60%' },
         'light-switch': { padding: '0.5% 0.5%', top: '47.5%', left: '18%' },
@@ -91,16 +87,13 @@ window.GAME_CONFIG = {
         doorToBedroomFromHallway: { padding: '3%', top: '96%', left: '49%' },
         hintToBedroomFromHallway: { padding: '0', top: '95%', left: '49%' },
         doorToStudyFromHallway: { padding: '20% 3%', top: '53%', left: '26%' },
-        doorToHallwayFromStudy: { padding: '8% 3%', top: '39%', left: '23%' },
-        doorToBalconyFromStudy: { padding: '10% 10%', top: '30%', left: '85%' },
-        doorToStudyFromBalcony: { padding: '10% 10%', top: '30%', left: '5%' }
+        doorToHallwayFromStudy: { padding: '8% 3%', top: '39%', left: '23%' }
     },
     interactions: [
         { id: 'wardrobe', text: '衣柜里放满了衣服，看起来很整洁。' },
         { id: 'monitor', text: '显示器屏幕上显示着一些代码。' },
         { id: 'landscape-photo', text: '这张风景照让人心里安静。' },
         { id: 'vanity-table', text: '梳妆台上摆着一些饰品。' },
-        { id: 'potted-plant', text: '盆栽长势不错，叶子很有精神。' },
         { id: 'balcony-chair', text: '藤椅很适合在阳台上发呆。' },
         { id: 'bbq-grill', text: '烧烤炉还留着一股炭火味。' }
     ]
