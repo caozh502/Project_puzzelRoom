@@ -10,8 +10,8 @@ const INITIAL_STATE = CONFIG.initialState || {};
 const INTRO_END_SCENE = CONFIG.introEndScene || 'bedroom';
 
 const DIALOGUE_SPEED = 50;
-// 调试开关：禁用梦境开场（眨眼+去模糊）
-const ENABLE_DREAM_INTRO = false;
+// 调试开关：禁用醒来效果（眨眼+去模糊）
+const ENABLE_WAKE_EFFECT = true;
 // 调试开关：跳过 intro 场景
 const ENABLE_INTRO_SCENE = false;
 
@@ -76,24 +76,32 @@ function applySceneBackground(sceneId, target) {
     }
 }
 
-// --- 梦境开场封装 ---
-function startDreamIntro(container, overlay, onUnblurEnd) {
+// --- 醒来效果封装 ---
+function startWakeEffect(container, overlay, onUnblurEnd) {
     if (!container || !overlay) return;
+    const activeScene = container.querySelector('.scene.active');
     // 显示覆盖层并启动眨眼动画
     overlay.classList.remove('hidden');
-    container.classList.add('dreaming');
-    overlay.classList.add('blink');
+    overlay.classList.add('wake-blink');
+    container.classList.add('dimmed');
+    container.classList.add('waking');
     // 覆盖层动画结束后移除自身
     overlay.addEventListener('animationend', () => {
         overlay.remove();
     }, { once: true });
-    // 去模糊动画结束后移除 dreaming 并触发回调
-    container.addEventListener('animationend', (e) => {
-        if (e.animationName === 'dreamUnblur') {
-            container.classList.remove('dreaming');
+    // 去模糊动画结束后移除 waking 并触发回调
+    const onWakeUnblurEnd = (e) => {
+        if (e.animationName === 'wakeUnblur') {
+            container.classList.remove('waking');
             if (typeof onUnblurEnd === 'function') onUnblurEnd();
         }
-    }, { once: true });
+    };
+
+    if (activeScene) {
+        activeScene.addEventListener('animationend', onWakeUnblurEnd, { once: true });
+    } else {
+        container.addEventListener('animationend', onWakeUnblurEnd, { once: true });
+    }
 }
 
 function updatePositions() {
@@ -131,20 +139,23 @@ function updatePositions() {
         const paddingRight = paddingRightPercent * containerWidth;
         el.style.padding = config.padding;
 
-        // 将原文本转移到调试信息：保存在 data-originalText，清空元素内部文本
-        const originalLabel = el.dataset.originalText || el.textContent.split('\n')[0];
-        el.dataset.originalText = originalLabel;
-        el.textContent = '';
-        el.setAttribute('aria-label', originalLabel);
+        const isHint = el.classList.contains('nav-hint');
+        if (!isHint) {
+            // 将原文本转移到调试信息：保存在 data-originalText，清空元素内部文本
+            const originalLabel = el.dataset.originalText || el.textContent.split('\n')[0];
+            el.dataset.originalText = originalLabel;
+            el.textContent = '';
+            el.setAttribute('aria-label', originalLabel);
 
-        // 仅为当前场景的物品添加调试信息
-        if (el.closest('.scene') === currentScene) {
-            const debugInfo = document.createElement('div');
-            debugInfo.className = 'debug-info';
-            debugInfo.innerHTML = `<small>@${originalLabel}<br>Top: ${newTop.toFixed(0)}px, Left: ${newLeft.toFixed(0)}px<br>Padding: ${Math.round(paddingTop)}px ${Math.round(paddingRight)}px</small>`;
-            debugInfo.style.top = `${newTop}px`; // 与物品顶部对齐
-            debugInfo.style.left = `${newLeft + el.offsetWidth / 2 + 5}px`; // 在物品视觉右侧5px
-            container.appendChild(debugInfo);
+            // 仅为当前场景的物品添加调试信息
+            if (el.closest('.scene') === currentScene) {
+                const debugInfo = document.createElement('div');
+                debugInfo.className = 'debug-info';
+                debugInfo.innerHTML = `<small>@${originalLabel}<br>Top: ${newTop.toFixed(0)}px, Left: ${newLeft.toFixed(0)}px<br>Padding: ${Math.round(paddingTop)}px ${Math.round(paddingRight)}px</small>`;
+                debugInfo.style.top = `${newTop}px`; // 与物品顶部对齐
+                debugInfo.style.left = `${newLeft + el.offsetWidth / 2 + 5}px`; // 在物品视觉右侧5px
+                container.appendChild(debugInfo);
+            }
         }
     });
 }
@@ -218,8 +229,8 @@ function handleIntroComplete() {
     document.body.classList.remove('image-open');
     if (overlayImage) overlayImage.src = '';
 
-    if (!ENABLE_DREAM_INTRO) {
-        const overlay = document.getElementById('dream-overlay');
+    if (!ENABLE_WAKE_EFFECT) {
+        const overlay = document.getElementById('wake-overlay');
         if (overlay) overlay.classList.add('hidden');
     }
 
@@ -234,10 +245,10 @@ function handleIntroComplete() {
         goToScene(INTRO_END_SCENE);
         const container = document.getElementById('game-container');
         if (container) container.classList.add('dimmed');
-        // 在切换到客厅后启动梦境开场效果（眨眼 + 去模糊）
-        const overlay = document.getElementById('dream-overlay');
-        if (ENABLE_DREAM_INTRO && container && overlay) {
-            startDreamIntro(container, overlay);
+        // 在切换到客厅后启动醒来效果（眨眼 + 去模糊）
+        const overlay = document.getElementById('wake-overlay');
+        if (ENABLE_WAKE_EFFECT && container && overlay) {
+            startWakeEffect(container, overlay);
         }
     }, 2000);
 
@@ -292,7 +303,16 @@ function goToScene(sceneId) {
 
     const sceneConfig = SCENE_CONFIGS[sceneId];
     if (sceneConfig && sceneConfig.onEnterDialogue && !gameState.visitedScenes[sceneId]) {
-        showDialogue(sceneConfig.onEnterDialogue);
+        const enterDialogue = sceneConfig.onEnterDialogue;
+        if (Array.isArray(enterDialogue)) {
+            const [first, ...rest] = enterDialogue.filter(Boolean);
+            if (first) {
+                showDialogue(first);
+                rest.forEach(line => gameState.dialogueQueue.push(line));
+            }
+        } else {
+            showDialogue(enterDialogue);
+        }
     }
 
     if (target) {
@@ -461,9 +481,9 @@ function initIntroScene() {
         goToScene(INTRO_END_SCENE);
         const container = document.getElementById('game-container');
         if (container) container.classList.add('dimmed');
-        const overlay = document.getElementById('dream-overlay');
-        if (ENABLE_DREAM_INTRO && container && overlay) {
-            startDreamIntro(container, overlay);
+        const overlay = document.getElementById('wake-overlay');
+        if (ENABLE_WAKE_EFFECT && container && overlay) {
+            startWakeEffect(container, overlay);
         } else if (overlay) {
             overlay.classList.add('hidden');
         }

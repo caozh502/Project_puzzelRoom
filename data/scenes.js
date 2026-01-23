@@ -42,7 +42,11 @@ window.GAME_CONFIG = {
         },
         bedroom: {
             id: 'bedroom',
-            onEnterDialogue: '好困呀……',
+            onEnterDialogue: [
+                '呜呜……好困……',
+                '刚刚的梦好真实。',
+                '先缓一缓再看看周围吧。'
+            ],
             background: {
                 type: 'image',
                 value: 'assets/Picture/bedroom.png',
@@ -81,10 +85,11 @@ window.GAME_CONFIG = {
         'balcony-chair': { padding: '1.5%', top: '50%', left: '85%' },
         'bbq-grill': { padding: '1.5%', top: '70%', left: '60%' },
         'light-switch': { padding: '0.5% 0.5%', top: '47.5%', left: '18%' },
-        doorToHallwayFromLivingroom: { padding: '10% 10%', top: '30%', left: '5%' },
+        doorToHallwayFromLivingroom: { padding: '8% 2%', top: '48%', left: '66%' },
         doorToHallwayFromBedroom: { padding: '8% 3%', top: '39%', left: '23%' },
         doorToLivingroomFromHallway: { padding: '47% 10%', top: '54%', left: '90%' },
         doorToBedroomFromHallway: { padding: '3%', top: '96%', left: '49%' },
+        hintToBedroomFromHallway: { padding: '0', top: '95%', left: '49%' },
         doorToStudyFromHallway: { padding: '20% 3%', top: '53%', left: '26%' },
         doorToHallwayFromStudy: { padding: '8% 3%', top: '39%', left: '23%' },
         doorToBalconyFromStudy: { padding: '10% 10%', top: '30%', left: '85%' },

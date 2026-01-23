@@ -32,6 +32,7 @@
             <div class="label">走廊</div>
             <button class="nav-btn" id="doorToLivingroomFromHallway" onclick="goToScene('livingroom')">⬅ 去客厅</button>
             <button class="nav-btn" id="doorToBedroomFromHallway" onclick="goToScene('bedroom')">去卧室 ⮕</button>
+            <div class="nav-hint" id="hintToBedroomFromHallway">▼</div>
             <button class="nav-btn" id="doorToStudyFromHallway" onclick="goToScene('study')">去书房 ⮕</button>
         </div>
 
@@ -71,8 +72,8 @@
         <!-- 隐藏互动框按钮 -->
         <div id="hide-btn" title="隐藏互动框">👁️</div>
 
-        <!-- 梦境转场覆盖层（启动时黑屏+淡出） -->
-        <div id="dream-overlay"></div>
+        <!-- 醒来效果覆盖层（启动时黑屏+淡出） -->
+        <div id="wake-overlay"></div>
 
         <!-- 图片展示覆盖层（显示礼物等图片时） -->
         <div id="image-overlay" class="hidden">
