@@ -43,9 +43,9 @@ window.GAME_CONFIG = {
         bedroom: {
             id: 'bedroom',
             onEnterDialogue: [
-                '呜呜……好困……',
-                '刚刚的梦好真实。',
-                '先缓一缓再看看周围吧。'
+                '呜…好困…',
+                '刚刚的梦感觉好真实……',
+                '房间太暗了，先把灯打开吧…'
             ],
             background: {
                 type: 'image',
