@@ -34,6 +34,7 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 音频变量
 let bgm, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
+let guitarSfx, violinSfx, pianoSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox;
 let isMuted = false;
@@ -345,6 +346,9 @@ function cacheElements() {
     wakeUpSfx = document.getElementById('wake-up-sfx');
     doorOpenSfx = document.getElementById('door-open-sfx');
     footStepsSfx = document.getElementById('footsteps-sfx');
+    guitarSfx = document.getElementById('guitar-sfx');
+    violinSfx = document.getElementById('violin-sfx');
+    pianoSfx = document.getElementById('piano-sfx');
     muteBtn = document.getElementById('mute-btn');
     hideBtn = document.getElementById('hide-btn');
     lightSwitch = document.getElementById('light-switch');
@@ -363,6 +367,16 @@ function initDialogueHandlers() {
     if (diagBox) diagBox.addEventListener('click', onDialogueBoxClick);
     // 全局点击（捕获阶段）：打字时任意点击立即完成剩余文字
     document.addEventListener('click', completeTypingImmediately, true);
+    // 对话框显示时：任意点击继续对话，但阻止互动框点击（静音/隐藏除外）
+    document.addEventListener('click', (event) => {
+        if (!diagBox || diagBox.classList.contains('hidden')) return;
+        const target = event.target;
+        if (muteBtn && muteBtn.contains(target)) return;
+        if (hideBtn && hideBtn.contains(target)) return;
+        onDialogueBoxClick();
+        event.preventDefault();
+        event.stopPropagation();
+    }, true);
 }
 
 function initAudio() {
@@ -373,7 +387,10 @@ function initAudio() {
         startDotSfx,
         wakeUpSfx,
         doorOpenSfx,
-        footStepsSfx
+        footStepsSfx,
+        guitarSfx,
+        violinSfx,
+        pianoSfx
     };
 
     Object.keys(audioMap).forEach(key => {
@@ -402,6 +419,9 @@ function initAudio() {
             if (wakeUpSfx) wakeUpSfx.muted = isMuted;
             if (doorOpenSfx) doorOpenSfx.muted = isMuted;
             if (footStepsSfx) footStepsSfx.muted = isMuted;
+            if (guitarSfx) guitarSfx.muted = isMuted;
+            if (violinSfx) violinSfx.muted = isMuted;
+            if (pianoSfx) pianoSfx.muted = isMuted;
             muteBtn.textContent = isMuted ? '🔇' : '🔊';
         });
     }
@@ -445,19 +465,14 @@ function initUIControls() {
 
     if (giftBox) {
         giftBox.addEventListener('click', () => {
-            if (overlayImage && imageOverlay) {
-                overlayImage.src = 'assets/Picture/gift.png';
-                imageOverlay.classList.remove('hidden');
-                document.body.classList.add('image-open');
-            }
+            openImageOverlay('assets/Picture/gift.png');
         });
     }
 
     if (imageOverlay) {
         imageOverlay.addEventListener('click', () => {
-            imageOverlay.classList.add('hidden');
-            document.body.classList.remove('image-open');
-            if (overlayImage) overlayImage.src = '';
+            closeImageOverlay();
+            closeDialogueBox();
         });
     }
 
@@ -465,13 +480,70 @@ function initUIControls() {
     document.body.addEventListener('click', () => {
         playSfx(clickSfx);
     });
+
+    // 图片展示时，任意点击关闭图片与对话框
+    document.addEventListener('click', () => {
+        if (!imageOverlay || imageOverlay.classList.contains('hidden')) return;
+        closeImageOverlay();
+        closeDialogueBox();
+    }, true);
+}
+
+function openImageOverlay(src) {
+    if (!src || !overlayImage || !imageOverlay) return;
+    overlayImage.src = src;
+    imageOverlay.classList.remove('hidden');
+    document.body.classList.add('image-open');
+}
+
+function closeImageOverlay() {
+    if (!imageOverlay) return;
+    imageOverlay.classList.add('hidden');
+    document.body.classList.remove('image-open');
+    if (overlayImage) overlayImage.src = '';
+}
+
+function closeDialogueBox() {
+    if (!diagBox) return;
+    diagBox.classList.add('hidden');
+    diagBox.classList.remove('show-next');
+    gameState.dialogueQueue = [];
+    gameState.justCompleted = false;
+    if (typingTimer) {
+        clearTimeout(typingTimer);
+        typingTimer = null;
+    }
+    if (nextTipTimer) {
+        clearTimeout(nextTipTimer);
+        nextTipTimer = null;
+    }
+    gameState.isTyping = false;
 }
 
 function initInteractions() {
+    const sfxMap = {
+        guitar: () => playSfx(guitarSfx),
+        violin: () => playSfx(violinSfx),
+        'electric-piano': () => playSfx(pianoSfx)
+    };
+    const imageMap = {
+        'couple-photo': 'assets/Picture/couple.jpg',
+        'landscape-venice-photo': 'assets/Picture/landscape-venice.jpg',
+        'sakura-photo': 'assets/Picture/sakura.jpg',
+        'startrail-photo': 'assets/Picture/startrail.jpg',
+        'sunset-photo': 'assets/Picture/sunset.JPG',
+        'swan-photo': 'assets/Picture/swan.JPG'
+    };
     INTERACTIONS.forEach(({ id, text }) => {
         const el = document.getElementById(id);
         if (!el) return;
-        el.addEventListener('click', () => showDialogue(text));
+        el.addEventListener('click', () => {
+            const play = sfxMap[id];
+            if (play) play();
+            const imageSrc = imageMap[id];
+            if (imageSrc) openImageOverlay(imageSrc);
+            showDialogue(text);
+        });
     });
 }
 

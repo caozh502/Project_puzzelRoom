@@ -14,7 +14,10 @@ window.GAME_CONFIG = {
         startDotSfx: { volume: 0.1, loop: false },
         wakeUpSfx: { volume: 0.5 },
         doorOpenSfx: { volume: 0.3 },
-        footStepsSfx: { volume: 0.6, delayMs: 1000 }
+        footStepsSfx: { volume: 0.6, delayMs: 1000 },
+        guitarSfx: { volume: 0.6 },
+        violinSfx: { volume: 0.6 },
+        pianoSfx: { volume: 0.6 }
     },
     audioSources: {
         bgm: 'assets/Audio/MainMenu_BGM.mp3',
@@ -23,7 +26,10 @@ window.GAME_CONFIG = {
         startDotSfx: 'assets/Audio/startDot_SFX.mp3',
         wakeUpSfx: 'assets/Audio/wakeUp_SFX.mp3',
         doorOpenSfx: 'assets/Audio/doorOpen_SFX.mp3',
-        footStepsSfx: 'assets/Audio/footSteps_SFX.mp3'
+        footStepsSfx: 'assets/Audio/footSteps_SFX.mp3',
+        guitarSfx: 'assets/Audio/guitar_pizz_SFX.m4a',
+        violinSfx: 'assets/Audio/violin_pizz_SFX.m4a',
+        pianoSfx: 'assets/Audio/piano_SFX.mp3'
     },
     scenes: {
         intro: {
@@ -91,12 +97,13 @@ window.GAME_CONFIG = {
         'sunset-photo': { padding: '1.5% 1.5%', top: '45%', left: '48%' },
         'couple-photo': { padding: '2.5% 2.5%', top: '43.5%', left: '53.5%' },
         'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
-        'landscape-photo': { padding: '10%', top: '39%', left: '40%' },
+        'landscape-venice-photo': { padding: '7% 10%', top: '39%', left: '40%' },
         'vanity-table': { padding: '10%', top: '68%', left: '88%' },
         'balcony-chair': { padding: '6%', top: '78%', left: '84%' },
         'bbq-grill': { padding: '3% 5%', top: '58%', left: '80%' },
         'light-switch': { padding: '0.8% 0.6%', top: '48.5%', left: '17.8%' },
         'bathroom-door': { padding: '17% 12%', top: '52%', left: '47%' },
+        'swan-photo': { padding: '8% 8%', top: '39%', left: '12%' },
         doorToHallwayFromLivingroom: { padding: '8% 2%', top: '48%', left: '66%' },
         doorToHallwayFromBedroom: { padding: '8% 3%', top: '39%', left: '23%' },
         doorToLivingroomFromHallway: { padding: '47% 10%', top: '54%', left: '90%' },
@@ -118,10 +125,11 @@ window.GAME_CONFIG = {
         { id: 'sakura-photo', text: '樱花照片的色调很柔和。' },
         { id: 'sunset-photo', text: '日落照片把房间都染暖了。' },
         { id: 'couple-photo', text: '双人合照里的笑容很自然。' },
-        { id: 'landscape-photo', text: '这张风景照让人心里安静。' },
+        { id: 'landscape-venice-photo', text: '这张风景照让人心里安静。' },
         { id: 'vanity-table', text: '梳妆台上摆着一些饰品。' },
         { id: 'balcony-chair', text: '藤椅很适合在阳台上发呆。' },
         { id: 'bbq-grill', text: '烧烤炉还留着一股炭火味。' },
-        { id: 'bathroom-door', text: '浴室里传来哗啦啦的水声，听起来有人正在洗澡。' }
+        { id: 'bathroom-door', text: '浴室里传来哗啦啦的水声，听起来有人正在洗澡。' },
+        { id: 'swan-photo', text: '天鹅照片里湖面安静得像镜子。' }
     ]
 };
