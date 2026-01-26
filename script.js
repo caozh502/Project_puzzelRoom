@@ -34,7 +34,7 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 音频变量
 let bgm, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
-let guitarSfx, violinSfx, pianoSfx;
+let guitarSfx, violinSfx, pianoSfx, showerSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox;
 let isMuted = false;
@@ -302,6 +302,20 @@ function goToScene(sceneId) {
     const target = document.getElementById(`scene-${sceneId}`);
     if (target) target.classList.add('active');
 
+// --- 新增：淋浴音效逻辑 ---
+    if (sceneId === 'hallway') {
+        if (showerSfx) {
+            showerSfx.loop = true; // 确保是循环播放
+            playSfx(showerSfx)
+        }
+    } else {
+        if (showerSfx) {
+            // 建议使用渐隐或直接停止
+            showerSfx.pause();
+            showerSfx.currentTime = 0; 
+        }
+    }
+
     const sceneConfig = SCENE_CONFIGS[sceneId];
     if (sceneConfig && sceneConfig.onEnterDialogue && !gameState.visitedScenes[sceneId]) {
         const enterDialogue = sceneConfig.onEnterDialogue;
@@ -349,6 +363,7 @@ function cacheElements() {
     guitarSfx = document.getElementById('guitar-sfx');
     violinSfx = document.getElementById('violin-sfx');
     pianoSfx = document.getElementById('piano-sfx');
+    showerSfx = document.getElementById('shower-sfx');
     muteBtn = document.getElementById('mute-btn');
     hideBtn = document.getElementById('hide-btn');
     lightSwitch = document.getElementById('light-switch');
@@ -390,7 +405,8 @@ function initAudio() {
         footStepsSfx,
         guitarSfx,
         violinSfx,
-        pianoSfx
+        pianoSfx,
+        showerSfx
     };
 
     Object.keys(audioMap).forEach(key => {
@@ -422,6 +438,7 @@ function initAudio() {
             if (guitarSfx) guitarSfx.muted = isMuted;
             if (violinSfx) violinSfx.muted = isMuted;
             if (pianoSfx) pianoSfx.muted = isMuted;
+            if (showerSfx) showerSfx.muted = isMuted;
             muteBtn.textContent = isMuted ? '🔇' : '🔊';
         });
     }

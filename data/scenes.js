@@ -15,9 +15,10 @@ window.GAME_CONFIG = {
         wakeUpSfx: { volume: 0.5 },
         doorOpenSfx: { volume: 0.3 },
         footStepsSfx: { volume: 0.6, delayMs: 1000 },
-        guitarSfx: { volume: 0.6 },
-        violinSfx: { volume: 0.6 },
-        pianoSfx: { volume: 0.6 }
+        guitarSfx: { volume: 0.3 },
+        violinSfx: { volume: 0.3 },
+        pianoSfx: { volume: 0.3 },
+        showerSfx: { volume: 0.5, loop: true }
     },
     audioSources: {
         bgm: 'assets/Audio/MainMenu_BGM.mp3',
@@ -27,6 +28,7 @@ window.GAME_CONFIG = {
         wakeUpSfx: 'assets/Audio/wakeUp_SFX.mp3',
         doorOpenSfx: 'assets/Audio/doorOpen_SFX.mp3',
         footStepsSfx: 'assets/Audio/footSteps_SFX.mp3',
+        showerSfx: 'assets/Audio/shower_SFX.mp3',
         guitarSfx: 'assets/Audio/guitar_pizz_SFX.m4a',
         violinSfx: 'assets/Audio/violin_pizz_SFX.m4a',
         pianoSfx: 'assets/Audio/piano_SFX.mp3'
@@ -117,7 +119,7 @@ window.GAME_CONFIG = {
         { id: 'wardrobe', text: '衣柜里放满了衣服，看起来很整洁，有一股洗衣液的香味。' },
         { id: 'monitor', text: '显示器屏幕上显示着一些代码，好像是一个游戏demo。' },
         { id: 'violin', text: '小提琴安静地靠在角落，弓上落着些灰。' },
-        { id: 'guitar', text: '吉他弦还很新，像刚被调过音。' },
+        { id: 'guitar', text: '吉他的音好像不太准，看来有一阵子没练习了。' },
         { id: 'electric-piano', text: '电钢琴的按键有轻微磨损。' },
         { id: 'bookcase', text: '书柜里塞满了乐谱和书。' },
         { id: 'storage-box', text: '杂物盒里堆着一些圣诞树的装饰品。' },
