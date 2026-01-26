@@ -118,20 +118,20 @@ window.GAME_CONFIG = {
     interactions: [
         { id: 'wardrobe', text: '衣柜里放满了衣服，看起来很整洁，有一股洗衣液的香味。' },
         { id: 'monitor', text: '显示器屏幕上显示着一些代码，好像是一个游戏demo。' },
-        { id: 'violin', text: '小提琴安静地靠在角落，弓上落着些灰。' },
+        { id: 'violin', text: '小提琴安静地靠在角落，漆面有轻微的磨损。' },
         { id: 'guitar', text: '吉他的音好像不太准，看来有一阵子没练习了。' },
-        { id: 'electric-piano', text: '电钢琴的按键有轻微磨损。' },
-        { id: 'bookcase', text: '书柜里塞满了乐谱和书。' },
+        { id: 'electric-piano', text: 'Donner电钢琴，当时花了不少钱咬牙买下的，谁叫木头的纹理让人心痒痒呢。' },
+        { id: 'bookcase', text: '书柜里塞了一些乐谱和书。' },
         { id: 'storage-box', text: '杂物盒里堆着一些圣诞树的装饰品。' },
-        { id: 'startrail-photo', text: '星轨照片像一圈圈温柔的光。' },
-        { id: 'sakura-photo', text: '樱花照片的色调很柔和。' },
-        { id: 'sunset-photo', text: '日落照片把房间都染暖了。' },
+        { id: 'startrail-photo', text: '那一晚的星空很美，两个人一起静静地等待着照片的出炉，有一搭没一搭地聊着天。' },
+        { id: 'sakura-photo', text: '参加摄影比赛落选的樱花，不过照片的色调很柔和。' },
+        { id: 'sunset-photo', text: '加尔达湖边的日落，安静而美好。' },
         { id: 'couple-photo', text: '双人合照里的笑容很自然。' },
-        { id: 'landscape-venice-photo', text: '这张风景照让人心里安静。' },
-        { id: 'vanity-table', text: '梳妆台上摆着一些饰品。' },
-        { id: 'balcony-chair', text: '藤椅很适合在阳台上发呆。' },
-        { id: 'bbq-grill', text: '烧烤炉还留着一股炭火味。' },
-        { id: 'bathroom-door', text: '浴室里传来哗啦啦的水声，听起来有人正在洗澡。' },
-        { id: 'swan-photo', text: '天鹅照片里湖面安静得像镜子。' }
+        { id: 'landscape-venice-photo', text: '日落时分，威尼斯的水面闪烁着金光。' },
+        { id: 'vanity-table', text: '梳妆台上摆着一些护肤品，下面的抽屉没关好，顺手带上吧。' },
+        { id: 'balcony-chair', text: '藤椅很适合在阳台上发呆一下午。' },
+        { id: 'bbq-grill', text: '烧烤炉还留着一股炭火味，比几年前买的那个小电烤炉烤的更香了。' },
+        { id: 'bathroom-door', text: '浴室里传来哗啦啦的水声，透过玻璃看里面热气蒸腾，应该是家里那位正在洗澡。' },
+        { id: 'swan-photo', text: '湖面像雕塑一样，波光粼粼。' }
     ]
 };
