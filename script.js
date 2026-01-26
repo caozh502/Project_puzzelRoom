@@ -302,15 +302,13 @@ function goToScene(sceneId) {
     const target = document.getElementById(`scene-${sceneId}`);
     if (target) target.classList.add('active');
 
-// --- 新增：淋浴音效逻辑 ---
+// --- 淋浴音效逻辑 ---
     if (sceneId === 'hallway') {
         if (showerSfx) {
-            showerSfx.loop = true; // 确保是循环播放
             playSfx(showerSfx)
         }
     } else {
         if (showerSfx) {
-            // 建议使用渐隐或直接停止
             showerSfx.pause();
             showerSfx.currentTime = 0; 
         }
