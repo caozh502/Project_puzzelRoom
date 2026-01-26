@@ -9,7 +9,7 @@ const AUDIO_SOURCES = CONFIG.audioSources || {};
 const INITIAL_STATE = CONFIG.initialState || {};
 const INTRO_END_SCENE = CONFIG.introEndScene || 'bedroom';
 
-const DIALOGUE_SPEED = 50;
+const DIALOGUE_SPEED = 25;
 // 调试开关：禁用醒来效果（眨眼+去模糊）
 const ENABLE_WAKE_EFFECT = false;
 // 调试开关：跳过 intro 场景
