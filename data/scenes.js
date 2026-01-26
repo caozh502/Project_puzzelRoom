@@ -68,7 +68,13 @@ window.GAME_CONFIG = {
         },
         study: {
             id: 'study',
-            background: { type: 'color', value: '#c9ada7' }
+            background: {
+                type: 'image',
+                value: 'assets/Picture/study.png',
+                size: '100% 100%',
+                position: 'center',
+                repeat: 'no-repeat'
+            }
         },
         
     },
@@ -87,7 +93,8 @@ window.GAME_CONFIG = {
         doorToBedroomFromHallway: { padding: '3%', top: '96%', left: '49%' },
         hintToBedroomFromHallway: { padding: '0', top: '95%', left: '49%' },
         doorToStudyFromHallway: { padding: '20% 3%', top: '53%', left: '26%' },
-        doorToHallwayFromStudy: { padding: '8% 3%', top: '39%', left: '23%' }
+        doorToHallwayFromStudy: { padding: '3%', top: '96%', left: '49%' },
+        hintToHallwayFromStudy: { padding: '0', top: '95%', left: '49%' }
     },
     interactions: [
         { id: 'wardrobe', text: '衣柜里放满了衣服，看起来很整洁。' },
