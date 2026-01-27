@@ -246,6 +246,32 @@ function startWakeEffect(container, overlay, onUnblurEnd) {
     }
 }
 
+function maintainAspectRatio() {
+    const container = document.getElementById('game-container');
+    if (!container) return;
+
+    const targetRatio = 16 / 9;
+    const winW = window.innerWidth;
+    const winH = window.innerHeight;
+    const winRatio = winW / winH;
+
+    let w, h;
+    if (winRatio > targetRatio) {
+        h = winH;
+        w = h * targetRatio;
+    } else {
+        w = winW;
+        h = w / targetRatio;
+    }
+
+    container.style.width = `${w}px`;
+    container.style.height = `${h}px`;
+    container.style.position = 'absolute';
+    container.style.top = '50%';
+    container.style.left = '50%';
+    container.style.transform = 'translate(-50%, -50%)';
+}
+
 function updatePositions() {
     // 删除之前的调试信息
     document.querySelectorAll('.debug-info').forEach(d => d.remove());
@@ -534,8 +560,12 @@ function cacheElements() {
 }
 
 function initPositions() {
+    maintainAspectRatio();
     updatePositions();
-    window.addEventListener('resize', updatePositions);
+    window.addEventListener('resize', () => {
+        maintainAspectRatio();
+        updatePositions();
+    });
 }
 
 function initDialogueHandlers() {
