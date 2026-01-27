@@ -18,6 +18,56 @@ body {
     border: 4px solid #fff;
 }
 
+#loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: #0a0a0a;
+    color: #fff;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* 高于所有游戏元素 */
+}
+
+.loading-content {
+    width: 60%;
+    max-width: 560px;
+    text-align: center;
+}
+
+.loading-title {
+    font-size: 20px;
+    margin-bottom: 16px;
+    opacity: 0.9;
+}
+
+.progress {
+    width: 100%;
+    height: 14px;
+    background: rgba(255,255,255,0.15);
+    border: 2px solid rgba(255,255,255,0.8);
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.6);
+}
+
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #2e86de, #54a0ff);
+    transition: width 0.2s ease;
+}
+
+.progress-text {
+    margin-top: 10px;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    opacity: 0.85;
+}
+
 .scene {
     position: absolute;
     width: 100%;
@@ -100,7 +150,7 @@ body {
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    width: 80%;
+    width: 65%;
     height: 60px;
     background: rgba(255, 255, 255, 0.95);
     border: 5px solid #9ad0ff;
@@ -130,16 +180,35 @@ body {
 
 #inventory-display {
     position: absolute;
-    top: 20px;
+    bottom: 20px;
     right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     color: white;
     background: rgba(0,0,0,0.5);
-    padding: 5px 10px;
+    padding: 6px 10px;
+    border-radius: 6px;
+}
+
+.inventory-nav {
+    background: rgba(255,255,255,0.15);
+    border: 1px solid rgba(255,255,255,0.35);
+    color: white;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.inventory-nav:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 #mute-btn {
     position: absolute;
-    bottom: 20px;
+    top: 20px;
     right: 20px;
     font-size: 12px;
     cursor: pointer;
@@ -151,8 +220,8 @@ body {
 
 #hide-btn {
     position: absolute;
-    bottom: 20px;
-    right: 70px; /* 靠近右下角，避免与静音按钮重叠 */
+    top: 20px;
+    right: 70px; /* 靠近右上角，避免与静音按钮重叠 */
     font-size: 12px;
     cursor: pointer;
     color: white;
@@ -174,6 +243,10 @@ body {
     justify-content: center;
     align-items: center;
     z-index: 400;
+}
+
+#image-overlay.fade-in {
+    animation: overlayFadeIn 2s ease-out forwards;
 }
 
 #image-overlay img {
@@ -284,4 +357,9 @@ body.fade-out {
 @keyframes fadeOutIntro {
     from { opacity: 1; }
     to { opacity: 0; }
+}
+
+@keyframes overlayFadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
 }

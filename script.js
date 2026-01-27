@@ -8,6 +8,19 @@ const AUDIO_CONFIGS = CONFIG.audio || {};
 const AUDIO_SOURCES = CONFIG.audioSources || {};
 const INITIAL_STATE = CONFIG.initialState || {};
 const INTRO_END_SCENE = CONFIG.introEndScene || 'bedroom';
+const KEY_ITEMS = CONFIG.keyItems || [];
+let currentKeyItemIndex = 0;
+
+// 统一图片资源映射（从配置中获取）
+const IMAGE_SOURCES = CONFIG.imageSources || {};
+
+// 统一兜底文本
+const FALLBACK_DIALOGUE = '请在scenes添加对话';
+
+// 关键物品收集（暴露全局变量名“找到的关键物品”）
+// 存储结构：{ id, name }
+const foundKeyItems = [];
+const foundKeyItemIds = new Set();
 
 const DIALOGUE_SPEED = 25;
 // 调试开关：禁用醒来效果（眨眼+去模糊）
@@ -22,7 +35,8 @@ const gameState = {
     dialogueQueue: [],
     justCompleted: false,
     flags: {},
-    visitedScenes: {}
+    visitedScenes: {},
+    interactionIndex: {}
 };
 
 // 记录打字计时器以便可取消
@@ -34,9 +48,12 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 音频变量
 let bgm, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
-let guitarSfx, violinSfx, pianoSfx, showerSfx;
+let guitarSfx, violinSfx, pianoSfx, showerSfx, deskCloseSfx;
 // 其他UI变量
-let muteBtn, hideBtn, lightSwitch, giftBox;
+let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer;
+let inventoryTextEl, inventoryPrevBtn, inventoryNextBtn;
+// 加载覆盖层元素
+let loadingOverlay, progressFill, progressText;
 let isMuted = false;
 let interactivesHidden = false;
 let diagBox, diagText;
@@ -60,6 +77,31 @@ function applyInitialState() {
     }
 }
 
+function markKeyItemFound(id, payload = {}) {
+    if (!id || foundKeyItemIds.has(id)) return;
+    const item = KEY_ITEMS.find(k => k.id === id);
+    if (!item) return;
+
+    // 优先使用传入的行和图片；否则从交互配置推导
+    let line = payload.line;
+    let image = payload.image;
+    if (!line || !image) {
+        const interaction = INTERACTIONS.find(i => i.id === id);
+        const texts = interaction && Array.isArray(interaction.texts) ? interaction.texts : [];
+        if (!line && texts.length > 0) {
+            line = texts[texts.length - 1];
+        }
+        if (!image) {
+            image = IMAGE_SOURCES[id];
+        }
+    }
+
+    foundKeyItemIds.add(id);
+    foundKeyItems.push({ id, name: item.name || id, line, image });
+    currentKeyItemIndex = Math.max(foundKeyItems.length - 1, 0);
+    updateInventory();
+}
+
 function applySceneBackground(sceneId, target) {
     if (!target) return;
     const sceneConfig = SCENE_CONFIGS[sceneId];
@@ -75,6 +117,64 @@ function applySceneBackground(sceneId, target) {
         target.style.backgroundImage = '';
         target.style.backgroundColor = background.value || '';
     }
+}
+
+// --- 资源预加载 ---
+function collectImageUrls() {
+    const set = new Set();
+    // 场景背景
+    Object.values(SCENE_CONFIGS).forEach(scene => {
+        const bg = scene && scene.background;
+        if (bg && bg.type === 'image' && bg.value) set.add(bg.value);
+    });
+    // 交互图片与其他图片
+    Object.values(IMAGE_SOURCES).forEach(url => set.add(url));
+    return Array.from(set);
+}
+
+function collectAudioUrls() {
+    return Object.values(AUDIO_SOURCES).filter(Boolean);
+}
+
+function preloadAssets(onProgress) {
+    const imageUrls = collectImageUrls();
+    const audioUrls = collectAudioUrls();
+    const total = imageUrls.length + audioUrls.length;
+    let loaded = 0;
+
+    const notify = () => {
+        if (typeof onProgress === 'function') onProgress(loaded, total);
+    };
+
+    const imgPromises = imageUrls.map(url => new Promise(resolve => {
+        const img = new Image();
+        img.onload = () => { loaded++; notify(); resolve(true); };
+        img.onerror = () => { loaded++; notify(); resolve(false); };
+        img.src = url;
+    }));
+
+    const audioPromises = audioUrls.map(url => new Promise(resolve => {
+        const a = new Audio();
+        a.preload = 'auto';
+        const done = () => { loaded++; notify(); resolve(true); cleanup(); };
+        const fail = () => { loaded++; notify(); resolve(false); cleanup(); };
+        const cleanup = () => {
+            a.removeEventListener('canplaythrough', done);
+            a.removeEventListener('loadeddata', done);
+            a.removeEventListener('loadedmetadata', done);
+            a.removeEventListener('error', fail);
+        };
+        a.addEventListener('canplaythrough', done, { once: true });
+        a.addEventListener('loadeddata', done, { once: true });
+        a.addEventListener('loadedmetadata', done, { once: true });
+        a.addEventListener('error', fail, { once: true });
+        a.src = url;
+        // 某些浏览器在 file: 协议下需要显式加载
+        try { a.load(); } catch (_) {}
+    }));
+
+    notify();
+    return Promise.all([...imgPromises, ...audioPromises]);
 }
 
 // --- 醒来效果封装 ---
@@ -275,6 +375,26 @@ function onDialogueBoxClick() {
         }, 500);
         return;
     }
+    // 抽屉耳环展示：应当在“刚刚完成打字”的早退之前触发
+    if (gameState.flags.drawerPendingEarrings && !gameState.isTyping) {
+        const earringsSrc = IMAGE_SOURCES['earrings'];
+        if (earringsSrc) openImageOverlay(earringsSrc, { fadeIn: true });
+        const drawerCfg = INTERACTIONS.find(i => i.id === 'bedroom-drawer');
+        const secondLine = drawerCfg && Array.isArray(drawerCfg.texts) ? drawerCfg.texts[1] : FALLBACK_DIALOGUE;
+        if (secondLine) gameState.dialogueQueue.push(secondLine);
+        // 记录耳环关键物品（使用第二句作为重播文本，耳环图作为重播图片）
+        markKeyItemFound('earrings', { line: secondLine, image: earringsSrc });
+        const bedroomScene = document.getElementById('scene-bedroom');
+        const bedroomCfg = SCENE_CONFIGS['bedroom'];
+        if (bedroomCfg && bedroomCfg.background) {
+            const restoredBg = bedroomCfg.backgroundAfterDrawer;
+            bedroomCfg.background.value = restoredBg;
+        }
+        if (bedroomScene) applySceneBackground('bedroom', bedroomScene);
+        gameState.flags.playDrawerCloseSfx = true;
+        gameState.flags.drawerPendingEarrings = false;
+        // 继续显示队列中的下一段
+    }
     // 刚刚通过全局点击完成打字：本次点击不关闭，仅复位标记
     if (gameState.justCompleted) {
         gameState.justCompleted = false;
@@ -341,10 +461,17 @@ function goToScene(sceneId) {
 }
 
 function updateInventory() {
-    const inventoryDisplay = document.getElementById('inventory-display');
-    if (inventoryDisplay) {
-        inventoryDisplay.innerText = `物品栏: ${gameState.inventory.join(", ")}`;
+    if (!inventoryTextEl) return;
+    const total = foundKeyItems.length;
+    if (total === 0) {
+        inventoryTextEl.textContent = '';
+    } else {
+        currentKeyItemIndex = Math.min(Math.max(currentKeyItemIndex, 0), total - 1);
+        const { name } = foundKeyItems[currentKeyItemIndex];
+        inventoryTextEl.textContent = `${name}`;
     }
+    if (inventoryPrevBtn) inventoryPrevBtn.disabled = total <= 1 || currentKeyItemIndex === 0;
+    if (inventoryNextBtn) inventoryNextBtn.disabled = total <= 1 || currentKeyItemIndex === total - 1;
 }
 
 // --- 初始化模块 ---
@@ -362,6 +489,7 @@ function cacheElements() {
     violinSfx = document.getElementById('violin-sfx');
     pianoSfx = document.getElementById('piano-sfx');
     showerSfx = document.getElementById('shower-sfx');
+    deskCloseSfx = document.getElementById('desk-close-sfx');
     muteBtn = document.getElementById('mute-btn');
     hideBtn = document.getElementById('hide-btn');
     lightSwitch = document.getElementById('light-switch');
@@ -369,6 +497,13 @@ function cacheElements() {
     overlayImage = document.getElementById('overlay-image');
     startDot = document.getElementById('start-dot');
     giftBox = document.getElementById('gift-box');
+    bedroomDrawer = document.getElementById('bedroom-drawer');
+    loadingOverlay = document.getElementById('loading-overlay');
+    progressFill = document.getElementById('progress-fill');
+    progressText = document.getElementById('progress-text');
+    inventoryTextEl = document.getElementById('inventory-text');
+    inventoryPrevBtn = document.getElementById('inventory-prev');
+    inventoryNextBtn = document.getElementById('inventory-next');
 }
 
 function initPositions() {
@@ -378,6 +513,16 @@ function initPositions() {
 
 function initDialogueHandlers() {
     if (diagBox) diagBox.addEventListener('click', onDialogueBoxClick);
+    // 图片+对话框同时显示时：任意点击关闭两者（不影响耳环流程的显示逻辑）
+    document.addEventListener('click', (event) => {
+        const overlayVisible = imageOverlay && !imageOverlay.classList.contains('hidden');
+        const dialogueVisible = diagBox && !diagBox.classList.contains('hidden');
+        if (overlayVisible && dialogueVisible) {
+            closeOverlayAndDialogue();
+            event.preventDefault();
+            event.stopPropagation();
+        }
+    }, true);
     // 全局点击（捕获阶段）：打字时任意点击立即完成剩余文字
     document.addEventListener('click', completeTypingImmediately, true);
     // 对话框显示时：任意点击继续对话，但阻止互动框点击（静音/隐藏除外）
@@ -404,7 +549,8 @@ function initAudio() {
         guitarSfx,
         violinSfx,
         pianoSfx,
-        showerSfx
+        showerSfx,
+        deskCloseSfx
     };
 
     Object.keys(audioMap).forEach(key => {
@@ -437,6 +583,7 @@ function initAudio() {
             if (violinSfx) violinSfx.muted = isMuted;
             if (pianoSfx) pianoSfx.muted = isMuted;
             if (showerSfx) showerSfx.muted = isMuted;
+            if (deskCloseSfx) deskCloseSfx.muted = isMuted;
             muteBtn.textContent = isMuted ? '🔇' : '🔊';
         });
     }
@@ -480,14 +627,41 @@ function initUIControls() {
 
     if (giftBox) {
         giftBox.addEventListener('click', () => {
-            openImageOverlay('assets/Picture/gift.png');
+            const src = IMAGE_SOURCES['gift'];
+            if (src) openImageOverlay(src);
         });
     }
 
     if (imageOverlay) {
         imageOverlay.addEventListener('click', () => {
-            closeImageOverlay();
-            closeDialogueBox();
+            closeOverlayAndDialogue();
+        });
+    }
+
+    // 点击当前物品名称，重播对应对话/图片
+    if (inventoryTextEl) {
+        inventoryTextEl.addEventListener('click', () => {
+            replayCurrentKeyItem();
+        });
+    }
+
+    // 物品栏左右切换
+    if (inventoryPrevBtn) {
+        inventoryPrevBtn.addEventListener('click', () => {
+            const total = foundKeyItems.length;
+            if (total === 0) return;
+            currentKeyItemIndex = Math.max(currentKeyItemIndex - 1, 0);
+            updateInventory();
+            replayCurrentKeyItem();
+        });
+    }
+    if (inventoryNextBtn) {
+        inventoryNextBtn.addEventListener('click', () => {
+            const total = foundKeyItems.length;
+            if (total === 0) return;
+            currentKeyItemIndex = Math.min(currentKeyItemIndex + 1, total - 1);
+            updateInventory();
+            replayCurrentKeyItem();
         });
     }
 
@@ -496,24 +670,21 @@ function initUIControls() {
         playSfx(clickSfx);
     });
 
-    // 图片展示时，任意点击关闭图片与对话框
-    document.addEventListener('click', () => {
-        if (!imageOverlay || imageOverlay.classList.contains('hidden')) return;
-        closeImageOverlay();
-        closeDialogueBox();
-    }, true);
 }
 
-function openImageOverlay(src) {
+function openImageOverlay(src, options = {}) {
     if (!src || !overlayImage || !imageOverlay) return;
+    const { fadeIn = false } = options;
     overlayImage.src = src;
     imageOverlay.classList.remove('hidden');
+    imageOverlay.classList.toggle('fade-in', fadeIn);
     document.body.classList.add('image-open');
 }
 
 function closeImageOverlay() {
     if (!imageOverlay) return;
     imageOverlay.classList.add('hidden');
+    imageOverlay.classList.remove('fade-in');
     document.body.classList.remove('image-open');
     if (overlayImage) overlayImage.src = '';
 }
@@ -535,29 +706,76 @@ function closeDialogueBox() {
     gameState.isTyping = false;
 }
 
+// 关闭图片与对话框的统一入口，必要时播放抽屉关闭音效
+function playDrawerCloseIfNeeded() {
+    if (gameState.flags.playDrawerCloseSfx) {
+        playSfx(deskCloseSfx);
+        gameState.flags.playDrawerCloseSfx = false;
+    }
+}
+
+function closeOverlayAndDialogue() {
+    closeImageOverlay();
+    closeDialogueBox();
+    playDrawerCloseIfNeeded();
+}
+
+function replayCurrentKeyItem() {
+    const item = foundKeyItems[currentKeyItemIndex];
+    if (!item) return;
+    const { id, line: storedLine, image: storedImage } = item;
+    const fallbackInteraction = INTERACTIONS.find(i => i.id === id);
+    const texts = fallbackInteraction && Array.isArray(fallbackInteraction.texts) ? fallbackInteraction.texts : [];
+    const line = storedLine || (texts.length > 0 ? texts[texts.length - 1] : FALLBACK_DIALOGUE);
+    const imageSrc = storedImage || IMAGE_SOURCES[id];
+    if (imageSrc) openImageOverlay(imageSrc, { fadeIn: true });
+    if (line) showDialogue(line);
+}
+
 function initInteractions() {
     const sfxMap = {
         guitar: () => playSfx(guitarSfx),
         violin: () => playSfx(violinSfx),
         'electric-piano': () => playSfx(pianoSfx)
     };
-    const imageMap = {
-        'couple-photo': 'assets/Picture/couple.jpg',
-        'landscape-venice-photo': 'assets/Picture/landscape-venice.jpg',
-        'sakura-photo': 'assets/Picture/sakura.jpg',
-        'startrail-photo': 'assets/Picture/startrail.jpg',
-        'sunset-photo': 'assets/Picture/sunset.JPG',
-        'swan-photo': 'assets/Picture/swan.JPG'
-    };
-    INTERACTIONS.forEach(({ id, text }) => {
+    INTERACTIONS.forEach((interaction) => {
+        const { id, texts, loop } = interaction;
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('click', () => {
+            // 梳妆台点击后激活抽屉
+            if (id === 'vanity-table') {
+                gameState.flags.drawerEnabled = true;
+                if (bedroomDrawer) bedroomDrawer.removeAttribute('aria-disabled');
+            }
+
+            // 抽屉特殊逻辑：需激活后才响应
+            if (id === 'bedroom-drawer') {
+                if (!gameState.flags.drawerEnabled) return;
+                const arr = Array.isArray(texts) ? texts : [];
+                const firstLine = arr[0] || FALLBACK_DIALOGUE;
+                showDialogue(firstLine);
+                // 标记等待下一次点击时展示耳环与第二段话，并替换背景
+                gameState.flags.drawerPendingEarrings = true;
+                return;
+            }
             const play = sfxMap[id];
             if (play) play();
-            const imageSrc = imageMap[id];
+            const imageSrc = IMAGE_SOURCES[id];
             if (imageSrc) openImageOverlay(imageSrc);
-            showDialogue(text);
+            const arr = Array.isArray(texts) ? texts : [];
+            if (arr.length > 0) {
+                const idx = gameState.interactionIndex[id] || 0;
+                const toShow = arr[Math.min(idx, arr.length - 1)];
+                const next = idx + 1;
+                gameState.interactionIndex[id] = loop
+                    ? (next % arr.length)
+                    : Math.min(next, arr.length - 1);
+                showDialogue(toShow);
+            }
+            // 记录关键物品
+            const discoveredLine = Array.isArray(texts) && texts.length > 0 ? texts[texts.length - 1] : undefined;
+            markKeyItemFound(id, { line: discoveredLine, image: imageSrc });
         });
     });
 }
@@ -586,7 +804,7 @@ function initIntroScene() {
         startDot.addEventListener('click', () => {
             if (startDotSfx) { startDotSfx.pause(); startDotSfx.currentTime = 0; }
             if (overlayImage && imageOverlay) {
-                overlayImage.src = 'assets/Picture/gift.png';
+                overlayImage.src = IMAGE_SOURCES['gift'];
                 imageOverlay.classList.remove('hidden');
                 document.body.classList.add('image-open');
             }
@@ -595,9 +813,8 @@ function initIntroScene() {
     }
 }
 
-// 开场白
-window.onload = () => {
-    cacheElements();
+// --- 启动流程：预加载 -> 启动游戏 ---
+function startGame() {
     applyInitialState();
     initPositions();
     initDialogueHandlers();
@@ -607,4 +824,28 @@ window.onload = () => {
     initDoorAudioForNavButtons();
     initIntroScene();
     updateInventory();
-};
+}
+
+function updateLoadingProgress(loaded, total) {
+    if (!progressFill || !progressText) return;
+    const percent = total > 0 ? Math.round((loaded / total) * 100) : 0;
+    progressFill.style.width = `${percent}%`;
+    progressText.textContent = `${percent}%`;
+    const progressEl = progressFill.parentElement;
+    if (progressEl) progressEl.setAttribute('aria-valuenow', String(percent));
+}
+
+function hideLoadingOverlay() {
+    if (loadingOverlay) {
+        loadingOverlay.style.display = 'none';
+        loadingOverlay.setAttribute('aria-busy', 'false');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    cacheElements();
+    preloadAssets(updateLoadingProgress).then(() => {
+        hideLoadingOverlay();
+        startGame();
+    });
+});
