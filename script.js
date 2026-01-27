@@ -638,7 +638,6 @@ function initUIControls() {
             if (total === 0) return;
             currentKeyItemIndex = Math.max(currentKeyItemIndex - 1, 0);
             updateInventory();
-            replayCurrentKeyItem();
         });
     }
     if (inventoryNextBtn) {
@@ -647,7 +646,6 @@ function initUIControls() {
             if (total === 0) return;
             currentKeyItemIndex = Math.min(currentKeyItemIndex + 1, total - 1);
             updateInventory();
-            replayCurrentKeyItem();
         });
     }
 
@@ -784,7 +782,7 @@ function replayCurrentKeyItem() {
     const texts = fallbackInteraction && Array.isArray(fallbackInteraction.texts) ? fallbackInteraction.texts : [];
     const line = storedLine || (texts.length > 0 ? texts[texts.length - 1] : FALLBACK_DIALOGUE);
     const imageSrc = storedImage || IMAGE_SOURCES[id];
-    if (imageSrc) openImageOverlay(imageSrc, { fadeIn: true });
+    if (imageSrc) openImageOverlay(imageSrc);
     if (line) showDialogue(line);
 }
 
