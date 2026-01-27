@@ -119,6 +119,47 @@ function applySceneBackground(sceneId, target) {
     }
 }
 
+function transitionSceneBackground(sceneId, newBgUrl, duration = 1000) {
+    const sceneEl = document.getElementById(`scene-${sceneId}`);
+    const sceneCfg = SCENE_CONFIGS[sceneId];
+    
+    if (!sceneCfg || !sceneCfg.background) return;
+
+    // 如果场景元素不存在，直接更新配置
+    if (!sceneEl) {
+        sceneCfg.background.value = newBgUrl;
+        return;
+    }
+
+    const bgCfg = sceneCfg.background;
+    const transitionLayer = document.createElement('div');
+    transitionLayer.style.position = 'absolute';
+    transitionLayer.style.top = '0';
+    transitionLayer.style.left = '0';
+    transitionLayer.style.width = '100%';
+    transitionLayer.style.height = '100%';
+    transitionLayer.style.backgroundImage = `url('${newBgUrl}')`;
+    transitionLayer.style.backgroundSize = bgCfg.size || 'contain';
+    transitionLayer.style.backgroundPosition = bgCfg.position || 'center';
+    transitionLayer.style.backgroundRepeat = bgCfg.repeat || 'no-repeat';
+    transitionLayer.style.opacity = '0';
+    transitionLayer.style.transition = `opacity ${duration}ms ease`;
+    transitionLayer.style.zIndex = '0';
+    
+    sceneEl.insertBefore(transitionLayer, sceneEl.firstChild);
+    
+    // 强制重绘以触发transition
+    void transitionLayer.offsetWidth;
+    
+    transitionLayer.style.opacity = '1';
+    
+    setTimeout(() => {
+        sceneCfg.background.value = newBgUrl;
+        applySceneBackground(sceneId, sceneEl);
+        transitionLayer.remove();
+    }, duration);
+}
+
 // --- 资源预加载 ---
 function collectImageUrls() {
     const set = new Set();
@@ -695,6 +736,10 @@ function playDrawerCloseIfNeeded() {
     if (gameState.flags.playDrawerCloseSfx) {
         playSfx(deskCloseSfx);
         gameState.flags.playDrawerCloseSfx = false;
+        const bedroomCfg = SCENE_CONFIGS['bedroom'];
+        if (bedroomCfg && bedroomCfg.backgroundAfterDrawer) {
+            transitionSceneBackground('bedroom', bedroomCfg.backgroundAfterDrawer, 2000);
+        }
     }
 }
 
@@ -732,14 +777,6 @@ function completeDrawerEarringsFlow() {
 
     // 记录耳环关键物品（使用第二句作为重播文本，耳环图作为重播图片）
     markKeyItemFound('earrings', { line: secondLine, image: earringsSrc });
-
-    const bedroomScene = document.getElementById('scene-bedroom');
-    const bedroomCfg = SCENE_CONFIGS['bedroom'];
-    if (bedroomCfg && bedroomCfg.background) {
-        const restoredBg = bedroomCfg.backgroundAfterDrawer;
-        bedroomCfg.background.value = restoredBg;
-    }
-    if (bedroomScene) applySceneBackground('bedroom', bedroomScene);
 
     // 抽屉关闭后禁用再次点击，需先激活梳妆台重新打开，层级恢复默认
     setDrawerEnabled(false);

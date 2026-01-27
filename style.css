@@ -326,7 +326,7 @@ body {
 }
 
 body.image-open #game-container.dimmed .scene.active {
-    filter: blur(12px) brightness(0.3) saturate(0.5);
+    filter: blur(6px) brightness(0.3) saturate(0.5);
 }
 
 #game-container.waking.dimmed .scene.active {
