@@ -123,8 +123,8 @@ window.GAME_CONFIG = {
         'couple-photo': { padding: '2.5% 2.5%', top: '43.5%', left: '53.5%' },
         'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
         'landscape-venice-photo': { padding: '7% 10%', top: '39%', left: '40%' },
-        'vanity-table': { padding: '10%', top: '68%', left: '88%' },
-        'bedroom-drawer': { padding: '2%', top: '68%', left: '88%' },
+        'vanity-table': { padding: '5% 10%', top: '68%', left: '88%' },
+        'bedroom-drawer': { padding: '3% 6%', top: '70%', left: '80%' },
         'balcony-chair': { padding: '6%', top: '78%', left: '84%' },
         'bbq-grill': { padding: '3% 5%', top: '58%', left: '80%' },
         'light-switch': { padding: '0.8% 0.6%', top: '48.5%', left: '17.8%' },
@@ -155,7 +155,10 @@ window.GAME_CONFIG = {
         { id: 'sunset-photo', texts: ['加尔达湖边的日落，安静而美好。'] },
         { id: 'couple-photo', texts: ['合照里两个人的笑容很自然。'] },
         { id: 'landscape-venice-photo', texts: ['日落时分，威尼斯的水面闪烁着金光，多拉贡们在悠闲交错地游行。'] },
-        { id: 'vanity-table', texts: ['梳妆台上摆着一些护肤品，下面的抽屉没关好，顺手带上吧。'] },
+        { id: 'vanity-table', texts: [
+            '梳妆台上摆着一些护肤品，下面的抽屉没关好，顺手带上吧。',
+            '梳妆台上摆着一些护肤品.'
+        ] },
         { id: 'bedroom-drawer', texts: ['好像抽屉里有什么东西卡住了……', '这是他那时圣诞节送我的，当时好喜欢……'] },
         { id: 'balcony-chair', texts: ['藤椅很适合在阳台上发呆一下午。'] },
         { id: 'bbq-grill', texts: ['烧烤炉还留着一股炭火味，比几年前买的那个小电烤炉烤的更香了。'] },

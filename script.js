@@ -50,7 +50,7 @@ let imageOverlay, overlayImage, startDot;
 let bgm, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
 let guitarSfx, violinSfx, pianoSfx, showerSfx, deskCloseSfx;
 // 其他UI变量
-let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer;
+let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable;
 let inventoryTextEl, inventoryPrevBtn, inventoryNextBtn;
 // 加载覆盖层元素
 let loadingOverlay, progressFill, progressText;
@@ -377,22 +377,7 @@ function onDialogueBoxClick() {
     }
     // 抽屉耳环展示：应当在“刚刚完成打字”的早退之前触发
     if (gameState.flags.drawerPendingEarrings && !gameState.isTyping) {
-        const earringsSrc = IMAGE_SOURCES['earrings'];
-        if (earringsSrc) openImageOverlay(earringsSrc, { fadeIn: true });
-        const drawerCfg = INTERACTIONS.find(i => i.id === 'bedroom-drawer');
-        const secondLine = drawerCfg && Array.isArray(drawerCfg.texts) ? drawerCfg.texts[1] : FALLBACK_DIALOGUE;
-        if (secondLine) gameState.dialogueQueue.push(secondLine);
-        // 记录耳环关键物品（使用第二句作为重播文本，耳环图作为重播图片）
-        markKeyItemFound('earrings', { line: secondLine, image: earringsSrc });
-        const bedroomScene = document.getElementById('scene-bedroom');
-        const bedroomCfg = SCENE_CONFIGS['bedroom'];
-        if (bedroomCfg && bedroomCfg.background) {
-            const restoredBg = bedroomCfg.backgroundAfterDrawer;
-            bedroomCfg.background.value = restoredBg;
-        }
-        if (bedroomScene) applySceneBackground('bedroom', bedroomScene);
-        gameState.flags.playDrawerCloseSfx = true;
-        gameState.flags.drawerPendingEarrings = false;
+        completeDrawerEarringsFlow();
         // 继续显示队列中的下一段
     }
     // 刚刚通过全局点击完成打字：本次点击不关闭，仅复位标记
@@ -498,6 +483,7 @@ function cacheElements() {
     startDot = document.getElementById('start-dot');
     giftBox = document.getElementById('gift-box');
     bedroomDrawer = document.getElementById('bedroom-drawer');
+    vanityTable = document.getElementById('vanity-table');
     loadingOverlay = document.getElementById('loading-overlay');
     progressFill = document.getElementById('progress-fill');
     progressText = document.getElementById('progress-text');
@@ -720,6 +706,76 @@ function closeOverlayAndDialogue() {
     playDrawerCloseIfNeeded();
 }
 
+function setDrawerEnabled(enabled) {
+    gameState.flags.drawerEnabled = enabled;
+    if (bedroomDrawer) {
+        if (enabled) bedroomDrawer.removeAttribute('aria-disabled');
+        else bedroomDrawer.setAttribute('aria-disabled', 'true');
+        bedroomDrawer.style.zIndex = enabled ? '13' : '';
+    }
+    if (vanityTable) {
+        vanityTable.style.zIndex = enabled ? '11' : '';
+    }
+}
+
+// 梳妆台/抽屉耳环流程：拆分启动与完成，便于复用
+function queueDrawerEarringsReveal() {
+    gameState.flags.drawerPendingEarrings = true;
+}
+
+function completeDrawerEarringsFlow() {
+    const earringsSrc = IMAGE_SOURCES['earrings'];
+    if (earringsSrc) openImageOverlay(earringsSrc, { fadeIn: true });
+
+    const drawerCfg = INTERACTIONS.find(i => i.id === 'bedroom-drawer');
+    const texts = drawerCfg && Array.isArray(drawerCfg.texts) ? drawerCfg.texts : [];
+    const secondLine = texts[1] || FALLBACK_DIALOGUE;
+    if (secondLine) gameState.dialogueQueue.push(secondLine);
+
+    // 记录耳环关键物品（使用第二句作为重播文本，耳环图作为重播图片）
+    markKeyItemFound('earrings', { line: secondLine, image: earringsSrc });
+
+    const bedroomScene = document.getElementById('scene-bedroom');
+    const bedroomCfg = SCENE_CONFIGS['bedroom'];
+    if (bedroomCfg && bedroomCfg.background) {
+        const restoredBg = bedroomCfg.backgroundAfterDrawer;
+        bedroomCfg.background.value = restoredBg;
+    }
+    if (bedroomScene) applySceneBackground('bedroom', bedroomScene);
+
+    // 抽屉关闭后禁用再次点击，需先激活梳妆台重新打开，层级恢复默认
+    setDrawerEnabled(false);
+    gameState.flags.playDrawerCloseSfx = true;
+    gameState.flags.drawerPendingEarrings = false;
+    gameState.flags.drawerFinished = true;
+    gameState.interactionIndex['vanity-table'] = Math.max(gameState.interactionIndex['vanity-table'] || 0, 1);
+}
+
+function handleVanityClick(texts) {
+    // 抽屉完成后不再重新激活
+    if (!gameState.flags.drawerFinished) {
+        setDrawerEnabled(true);
+    }
+    if (!gameState.flags.drawerOpened) {
+        const arr = Array.isArray(texts) ? texts : [];
+        const first = arr[0] || FALLBACK_DIALOGUE;
+        showDialogue(first);
+        return true; // handled, do not advance dialogue cycling yet
+    }
+    return false; // allow normal interaction flow
+}
+
+function handleDrawerClick(texts) {
+    if (gameState.flags.drawerFinished) return true;
+    if (!gameState.flags.drawerEnabled) return true;
+    gameState.flags.drawerOpened = true;
+    const arr = Array.isArray(texts) ? texts : [];
+    const firstLine = arr[0] || FALLBACK_DIALOGUE;
+    showDialogue(firstLine);
+    queueDrawerEarringsReveal();
+    return true;
+}
+
 function replayCurrentKeyItem() {
     const item = foundKeyItems[currentKeyItemIndex];
     if (!item) return;
@@ -743,21 +799,16 @@ function initInteractions() {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('click', () => {
-            // 梳妆台点击后激活抽屉
+            // 梳妆台特殊处理
             if (id === 'vanity-table') {
-                gameState.flags.drawerEnabled = true;
-                if (bedroomDrawer) bedroomDrawer.removeAttribute('aria-disabled');
+                const handled = handleVanityClick(texts);
+                if (handled) return;
             }
 
-            // 抽屉特殊逻辑：需激活后才响应
+            // 抽屉特殊逻辑
             if (id === 'bedroom-drawer') {
-                if (!gameState.flags.drawerEnabled) return;
-                const arr = Array.isArray(texts) ? texts : [];
-                const firstLine = arr[0] || FALLBACK_DIALOGUE;
-                showDialogue(firstLine);
-                // 标记等待下一次点击时展示耳环与第二段话，并替换背景
-                gameState.flags.drawerPendingEarrings = true;
-                return;
+                const handled = handleDrawerClick(texts);
+                if (handled) return;
             }
             const play = sfxMap[id];
             if (play) play();

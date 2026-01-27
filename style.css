@@ -1,4 +1,11 @@
 /* Base layout */
+/* 禁止文本被选中，适用于全局 */
+* {
+    user-select: none;
+    -webkit-user-select: none;
+    -ms-user-select: none;
+}
+
 body {
     margin: 0;
     background-color: #333;
@@ -189,6 +196,16 @@ body {
     background: rgba(0,0,0,0.5);
     padding: 6px 10px;
     border-radius: 6px;
+    cursor: pointer;
+}
+
+/* 提升梳妆台点击层级，使其在抽屉之上 */
+#vanity-table {
+    z-index: 12;
+}
+
+#bedroom-drawer {
+    z-index: 11;
 }
 
 .inventory-nav {
