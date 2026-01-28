@@ -786,8 +786,8 @@ function playDrawerCloseIfNeeded() {
         playSfx(deskCloseSfx);
         gameState.flags.playDrawerCloseSfx = false;
         const bedroomCfg = SCENE_CONFIGS['bedroom'];
-        if (bedroomCfg && bedroomCfg.backgroundAfterDrawer) {
-            transitionSceneBackground('bedroom', bedroomCfg.backgroundAfterDrawer, 2000);
+        if (bedroomCfg && bedroomCfg.backgroundAfter) {
+            transitionSceneBackground('bedroom', bedroomCfg.backgroundAfter, 2000);
         }
     }
 }
@@ -795,8 +795,8 @@ function playDrawerCloseIfNeeded() {
 function playPhotoFrameBgSwapIfNeeded() {
     if (!gameState.flags.playPhotoFrameBgSwap) return;
     const livingroomCfg = SCENE_CONFIGS['livingroom'];
-    if (livingroomCfg && livingroomCfg.backgroundAfterDrawer) {
-        transitionSceneBackground('livingroom', livingroomCfg.backgroundAfterDrawer, 2000);
+    if (livingroomCfg && livingroomCfg.backgroundAfter) {
+        transitionSceneBackground('livingroom', livingroomCfg.backgroundAfter, 2000);
     }
 }
 
@@ -899,15 +899,29 @@ function handleDrawerClick(texts) {
 }
 
 function handleTvCabinetClick(texts) {
-    if (!gameState.flags.photoFrameFinished) {
-        const arr = Array.isArray(texts) ? texts : [];
-        const first = arr[0] || FALLBACK_DIALOGUE;
-        showDialogue(first);
-        gameState.flags.tvCabinetInteracted = true;
-        // 在相框流程完成前，固定展示首句，不进入默认轮播
+    const arr = Array.isArray(texts) ? texts : [];
+    const first = arr[0] || FALLBACK_DIALOGUE;
+    const second = arr[1] || first;
+    const third = arr[2] || second;
+
+    // 1. 相框已修好：停留在第三句
+    if (gameState.flags.photoFrameFinished) {
+        showDialogue(third);
         return true;
     }
-    return false;
+
+    gameState.flags.tvCabinetInteracted = true;
+
+    // 2. 若未检查过相框，只显示第一句
+    if (!gameState.flags.photoFrameInspected) {
+        showDialogue(first);
+        return true;
+    }
+
+    // 3. 检查过相框后，显示第二句（找到螺丝刀）
+    showDialogue(second);
+    gameState.flags.tvCabinetFoundScrewdriver = true;
+    return true;
 }
 
 function handlePhotoFrameClick(texts) {
@@ -920,14 +934,22 @@ function handlePhotoFrameClick(texts) {
     const firstLine = arr[0] || FALLBACK_DIALOGUE;
     const secondLine = arr[1] || firstLine;
 
-    // 电视柜未点击：只展示第一句，不触发展示
-    if (!gameState.flags.tvCabinetInteracted) {
+    // 第一次点击相框：显示第一句并标记
+    if (!gameState.flags.photoFrameInspected) {
         showDialogue(firstLine);
+        gameState.flags.photoFrameInspected = true;
         gameState.interactionIndex['photo-frame'] = 0;
         return true;
     }
 
     // 电视柜已点击：从第二句开始，等待对话框点击时进入第三句并弹出图片
+    // 若未在电视柜找到螺丝刀，保持第一句
+    if (!gameState.flags.tvCabinetFoundScrewdriver) {
+        showDialogue(firstLine);
+        return true;
+    }
+
+    // 找到螺丝刀后：从第二句开始，等待对话框点击时进入第三句并弹出图片
     showDialogue(secondLine || FALLBACK_DIALOGUE);
     queuePhotoFrameReveal();
     return true;
