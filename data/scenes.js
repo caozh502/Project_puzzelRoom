@@ -117,6 +117,9 @@ window.GAME_CONFIG = {
         'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
         'aroma-candle': { padding: '1%', top: '62.5%', left: '73%', rotation: '2deg' },
         'switch-console': { padding: '2% 2.5%', top: '64%', left: '77%', rotation: '10deg' },
+        'snack-box': { padding: '2% 4.5%', top: '78%', left: '47.5%'},
+        'shark-plush': { padding: '3% 7%', top: '52%', left: '17%'},
+        'fridge-note': { padding: '3% 3%', top: '47%', left: '42%'},
         'tv-cabinet': { padding: '3% 12%', top: '75%', left: '77%', rotation: '20deg' },
         'photo-frame': { padding: '2.5% 4%', top: '68%', left: '83%' },
         doorToHallwayFromLivingroom: { padding: '8% 1.5%', top: '48%', left: '66%' },
@@ -164,6 +167,21 @@ window.GAME_CONFIG = {
             'Switch正插在底座上，Joy-Con还在充电。',
             '我们第一次一起玩的游戏好像是《双人成行》，我们的合作越来越有默契。',
             '印象最深的是暴风雪的关卡，我们在大风雪里相互搀扶着前行。'
+        ] },
+        { id: 'snack-box', texts: [
+            '零食盒里塞满了各种小零食，有薯片、海带结，还有我最喜欢的酸话梅。',
+            '每次晚上看剧的时候，都会偷偷拿出一点来吃，感觉特别治愈。',
+            '家里那位总是笑我吃得太多，说我会变成小胖子……'
+        ] },
+        { id: 'shark-plush', texts: [
+            '宜家买的鲨鱼玩偶“布罗艾”，已经被抱得有点塌塌的了，但还是很阔奈。'
+        ] },
+        { id: 'fridge-note', texts: [
+            '冰箱门上贴着一些字条，第一张：面包和Hafer不够了，记得买哦～<auto>',
+            '第二张：今晚一起看新出的《罗小黑战记3》吗？',
+            '第三张：周末一起去那家的新开餐厅试试吧！',
+            '第四张：我在冰箱里放了你最爱的葡萄烧酒，记得喝掉哦～',
+            '确实有点口渴了，想喝点东西……'
         ] },
         { id: 'tv-cabinet', texts: [
             '电视柜的抽屉里塞满了遥控器和说明书，啊哈，找到了一把螺丝刀！',

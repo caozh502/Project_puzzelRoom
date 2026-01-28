@@ -11,6 +11,9 @@ const INTRO_END_SCENE = CONFIG.introEndScene || 'bedroom';
 const KEY_ITEMS = CONFIG.keyItems || [];
 let currentKeyItemIndex = 0;
 
+// 对话标签：在文本中加入此标记，可在单次触发后通过对话框点击继续播放后续行
+const AUTO_ADVANCE_TAG = '<auto>';
+
 // 统一图片资源映射（从配置中获取）
 const IMAGE_SOURCES = CONFIG.imageSources || {};
 
@@ -95,6 +98,7 @@ function markKeyItemFound(id, payload = {}) {
             image = IMAGE_SOURCES[id];
         }
     }
+
 
     foundKeyItemIds.add(id);
     foundKeyItems.push({ id, name: item.name || id, line, image });
@@ -980,15 +984,34 @@ function initInteractions() {
             const arr = Array.isArray(texts) ? texts : [];
             if (arr.length > 0) {
                 const idx = gameState.interactionIndex[id] || 0;
-                const toShow = arr[Math.min(idx, arr.length - 1)];
-                const next = idx + 1;
-                gameState.interactionIndex[id] = loop
-                    ? (next % arr.length)
-                    : Math.min(next, arr.length - 1);
+                const effectiveIdx = Math.min(idx, arr.length - 1);
+                const rawText = arr[effectiveIdx];
+                const hasAuto = typeof rawText === 'string' && rawText.includes(AUTO_ADVANCE_TAG);
+                const toShow = typeof rawText === 'string'
+                    ? rawText.replace(AUTO_ADVANCE_TAG, '').trim()
+                    : rawText;
+
+                // 若标记自动推进，则把后续行排入队列，单次触发后无需再次点击物品
+                if (hasAuto) {
+                    const rest = arr.slice(effectiveIdx + 1)
+                        .map(t => (typeof t === 'string' ? t.replace(AUTO_ADVANCE_TAG, '').trim() : t))
+                        .filter(Boolean);
+                    if (rest.length > 0) {
+                        gameState.dialogueQueue.push(...rest);
+                    }
+                    gameState.interactionIndex[id] = loop ? (effectiveIdx + 1) % arr.length : arr.length - 1;
+                } else {
+                    const next = effectiveIdx + 1;
+                    gameState.interactionIndex[id] = loop
+                        ? (next % arr.length)
+                        : Math.min(next, arr.length - 1);
+                }
                 showDialogue(toShow);
             }
             // 记录关键物品
-            const discoveredLine = Array.isArray(texts) && texts.length > 0 ? texts[texts.length - 1] : undefined;
+            const discoveredLine = Array.isArray(texts) && texts.length > 0
+                ? texts[texts.length - 1]
+                : undefined;
             markKeyItemFound(id, { line: discoveredLine, image: imageSrc });
         });
     });
