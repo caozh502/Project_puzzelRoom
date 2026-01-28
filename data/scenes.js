@@ -1,7 +1,7 @@
 // 数据驱动配置：场景、交互文本、物品位置
 window.GAME_CONFIG = {
     startScene: 'intro',
-    introEndScene: 'bedroom',
+    introEndScene: 'livingroom',
     initialState: {
         inventory: [],
         flags: {},
@@ -44,12 +44,13 @@ window.GAME_CONFIG = {
         'sunset-photo': 'assets/Picture/sunset.JPG',
         'swan-photo': 'assets/Picture/swan.JPG',
         'gift': 'assets/Picture/gift.png',
-        'earrings': 'assets/Picture/earrings.png'
+        'earrings': 'assets/Picture/earrings.png',
+        'photo-frame': 'assets/Picture/instax.png'
     },
     // 关键物品列表（发现时会记录到“找到的关键物品”）
     keyItems: [
         { id: 'earrings', name: '耳环' },
-        { id: 'couple-photo', name: '相框' },
+        { id: 'photo-frame', name: '相框' },
         { id: 'electric-piano', name: '钢琴琴键' },
         { id: 'soju', name: '烧酒' },
         { id: 'beer-opener', name: '啤酒起子' }
@@ -63,11 +64,13 @@ window.GAME_CONFIG = {
             id: 'livingroom',
             background: {
                 type: 'image',
-                value: 'assets/Picture/livingroom.png',
+                value: 'assets/Picture/livingroom_frameDown.png',
                 size: '100% 100%',
                 position: 'center',
                 repeat: 'no-repeat'
-            }
+            },
+            backgroundAfterDrawer: 'assets/Picture/livingroom.png',
+            backgroundAfterFrame: 'assets/Picture/livingroom.png'
         },
         bedroom: {
             id: 'bedroom',
@@ -83,8 +86,8 @@ window.GAME_CONFIG = {
                 position: 'center',
                 repeat: 'no-repeat'
             },
-            // 抽屉交互后需要恢复的背景
-            backgroundAfterDrawer: 'assets/Picture/bedroom.png'
+            backgroundAfterDrawer: 'assets/Picture/bedroom.png',
+            backgroundAfterFrame: 'assets/Picture/bedroom.png'
         },
         hallway: {
             id: 'hallway',
@@ -123,6 +126,8 @@ window.GAME_CONFIG = {
         'couple-photo': { padding: '2.5% 2.5%', top: '43.5%', left: '53.5%' },
         'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
         'landscape-venice-photo': { padding: '7% 10%', top: '39%', left: '40%' },
+        'tv-cabinet': { padding: '7% 10%', top: '66%', left: '44%' },
+        'photo-frame': { padding: '2.5% 2.5%', top: '66%', left: '48%' },
         'vanity-table': { padding: '5% 10%', top: '68%', left: '88%' },
         'bedroom-drawer': { padding: '3% 6%', top: '70%', left: '80%' },
         'balcony-chair': { padding: '6%', top: '78%', left: '84%' },
@@ -153,16 +158,24 @@ window.GAME_CONFIG = {
         { id: 'startrail-photo', texts: ['那一晚的星空很美，两个人一起静静地等待着照片的出炉，有一搭没一搭地聊着天。'] },
         { id: 'sakura-photo', texts: ['参加摄影比赛落选的樱花，不过照片的色调很柔和。'] },
         { id: 'sunset-photo', texts: ['加尔达湖边的日落，安静而美好。'] },
-        { id: 'couple-photo', texts: ['合照里两个人的笑容很自然。'] },
+        { id: 'couple-photo', texts: ['这次合照里两个人的笑容很自然，挺难得。'] },
         { id: 'landscape-venice-photo', texts: ['日落时分，威尼斯的水面闪烁着金光，多拉贡们在悠闲交错地游行。'] },
+        { id: 'tv-cabinet', texts: [
+            '电视柜上摆了不少东西，不过相册怎么倒了呢……',
+            '电视柜上摆了不少东西，当时为了安装它，我们两个人花了一下午加一晚上的时间。'
+        ]},
+        { id: 'photo-frame', texts: [
+            '照片里两个人披着毛毯，那天虽然柏林阳光明媚，但风特别大……',
+            '呼，摆正了……诶？相框背面怎么有个数字3……'
+        ] },
         { id: 'vanity-table', texts: [
             '梳妆台上摆着一些护肤品，下面的抽屉没关好，顺手带上吧。',
             '梳妆台上摆着一些护肤品，找个时间收拾一下吧。'
         ] },
         { id: 'bedroom-drawer', texts: [
             '好像抽屉里有什么东西卡住了……',
-            '这是那时圣诞节送我的，一对栀子花，当时好喜欢……'] 
-        },
+            '这是那时圣诞节送我的，一对栀子花，当时好喜欢……'
+        ] },
         { id: 'balcony-chair', texts: ['藤椅很适合在阳台上发呆一下午。'] },
         { id: 'bbq-grill', texts: ['烧烤炉还留着一股炭火味，比几年前买的那个小电烤炉烤的更香了。'] },
         { id: 'bathroom-door', texts: ['浴室里传来哗啦啦的水声，透过玻璃看里面热气蒸腾，应该是家里那位正在洗澡。'] },

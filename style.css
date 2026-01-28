@@ -92,6 +92,7 @@ body {
     left: 20px;
     color: white;
     font-size: 24px;
+    display: none; 
 }
 
 /* 场景颜色区分 */
@@ -205,6 +206,14 @@ body {
 }
 
 #bedroom-drawer {
+    z-index: 11;
+}
+
+#tv-cabinet {
+    z-index: 12;
+}
+
+#photo-frame {
     z-index: 11;
 }
 

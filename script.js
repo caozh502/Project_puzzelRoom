@@ -50,7 +50,7 @@ let imageOverlay, overlayImage, startDot;
 let bgm, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
 let guitarSfx, violinSfx, pianoSfx, showerSfx, deskCloseSfx;
 // 其他UI变量
-let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable;
+let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
 let inventoryTextEl, inventoryPrevBtn, inventoryNextBtn;
 // 加载覆盖层元素
 let loadingOverlay, progressFill, progressText;
@@ -447,6 +447,10 @@ function onDialogueBoxClick() {
         completeDrawerEarringsFlow();
         // 继续显示队列中的下一段
     }
+    // 电视柜-相框流程：等待首次点击完成打字后再触发展示
+    if (gameState.flags.photoFramePendingReveal && !gameState.isTyping) {
+        completePhotoFrameFlow();
+    }
     // 刚刚通过全局点击完成打字：本次点击不关闭，仅复位标记
     if (gameState.justCompleted) {
         gameState.justCompleted = false;
@@ -551,6 +555,8 @@ function cacheElements() {
     giftBox = document.getElementById('gift-box');
     bedroomDrawer = document.getElementById('bedroom-drawer');
     vanityTable = document.getElementById('vanity-table');
+    tvCabinet = document.getElementById('tv-cabinet');
+    photoFrame = document.getElementById('photo-frame');
     loadingOverlay = document.getElementById('loading-overlay');
     progressFill = document.getElementById('progress-fill');
     progressText = document.getElementById('progress-text');
@@ -773,10 +779,26 @@ function playDrawerCloseIfNeeded() {
     }
 }
 
+function playPhotoFrameBgSwapIfNeeded() {
+    if (!gameState.flags.playPhotoFrameBgSwap) return;
+    const livingroomCfg = SCENE_CONFIGS['livingroom'];
+    if (livingroomCfg && livingroomCfg.backgroundAfterDrawer) {
+        transitionSceneBackground('livingroom', livingroomCfg.backgroundAfterDrawer, 2000);
+    }
+}
+
 function closeOverlayAndDialogue() {
     closeImageOverlay();
     closeDialogueBox();
     playDrawerCloseIfNeeded();
+    playPhotoFrameBgSwapIfNeeded();
+}
+
+function swapHierarchy(primaryEl, secondaryEl, swapped, options = {}) {
+    const { primaryZ = '13', secondaryZ = '11', flagKey } = options;
+    if (primaryEl) primaryEl.style.zIndex = swapped ? primaryZ : '';
+    if (secondaryEl) secondaryEl.style.zIndex = swapped ? secondaryZ : '';
+    if (flagKey) gameState.flags[flagKey] = swapped;
 }
 
 function setDrawerEnabled(enabled) {
@@ -784,11 +806,18 @@ function setDrawerEnabled(enabled) {
     if (bedroomDrawer) {
         if (enabled) bedroomDrawer.removeAttribute('aria-disabled');
         else bedroomDrawer.setAttribute('aria-disabled', 'true');
-        bedroomDrawer.style.zIndex = enabled ? '13' : '';
     }
-    if (vanityTable) {
-        vanityTable.style.zIndex = enabled ? '11' : '';
+    swapHierarchy(bedroomDrawer, vanityTable, enabled);
+}
+
+function setPhotoFrameEnabled(enabled, options = {}) {
+    const { revertHierarchy = true } = options;
+    gameState.flags.photoFrameEnabled = enabled;
+    if (photoFrame) {
+        if (enabled) photoFrame.removeAttribute('aria-disabled');
+        else photoFrame.setAttribute('aria-disabled', 'true');
     }
+    swapHierarchy(photoFrame, tvCabinet, enabled);
 }
 
 // 梳妆台/抽屉耳环流程：拆分启动与完成，便于复用
@@ -816,6 +845,29 @@ function completeDrawerEarringsFlow() {
     gameState.interactionIndex['vanity-table'] = Math.max(gameState.interactionIndex['vanity-table'] || 0, 1);
 }
 
+function queuePhotoFrameReveal() {
+    gameState.flags.photoFramePendingReveal = true;
+}
+
+function completePhotoFrameFlow() {
+    const frameSrc = IMAGE_SOURCES['photo-frame'];
+    if (frameSrc) openImageOverlay(frameSrc, { fadeIn: true });
+
+    const frameCfg = INTERACTIONS.find(i => i.id === 'photo-frame');
+    const texts = frameCfg && Array.isArray(frameCfg.texts) ? frameCfg.texts : [];
+    const secondLine = texts[1] || FALLBACK_DIALOGUE;
+    if (secondLine) gameState.dialogueQueue.push(secondLine);
+
+    markKeyItemFound('photo-frame', { line: secondLine, image: frameSrc });
+
+    // 关闭互动但保留层级，等待背景替换后再恢复
+    setPhotoFrameEnabled(false);
+    gameState.flags.playPhotoFrameBgSwap = true;
+    gameState.flags.photoFramePendingReveal = false;
+    gameState.flags.photoFrameFinished = true;
+    gameState.interactionIndex['tv-cabinet'] = Math.max(gameState.interactionIndex['tv-cabinet'] || 0, 1);
+}
+
 function handleVanityClick(texts) {
     // 抽屉完成后不再重新激活
     if (!gameState.flags.drawerFinished) {
@@ -838,6 +890,29 @@ function handleDrawerClick(texts) {
     const firstLine = arr[0] || FALLBACK_DIALOGUE;
     showDialogue(firstLine);
     queueDrawerEarringsReveal();
+    return true;
+}
+
+function handleTvCabinetClick(texts) {
+    if (!gameState.flags.photoFrameFinished) {
+        setPhotoFrameEnabled(true);
+        const arr = Array.isArray(texts) ? texts : [];
+        const first = arr[0] || FALLBACK_DIALOGUE;
+        showDialogue(first);
+        gameState.flags.tvCabinetInteracted = true;
+        // 在相框流程完成前，固定展示首句，不进入默认轮播
+        return true;
+    }
+    return false;
+}
+
+function handlePhotoFrameClick(texts) {
+    if (gameState.flags.photoFrameFinished) return true;
+    if (!gameState.flags.photoFrameEnabled) return true;
+    const arr = Array.isArray(texts) ? texts : [];
+    const firstLine = arr[0] || FALLBACK_DIALOGUE;
+    showDialogue(firstLine);
+    queuePhotoFrameReveal();
     return true;
 }
 
@@ -873,6 +948,16 @@ function initInteractions() {
             // 抽屉特殊逻辑
             if (id === 'bedroom-drawer') {
                 const handled = handleDrawerClick(texts);
+                if (handled) return;
+            }
+
+            if (id === 'tv-cabinet') {
+                const handled = handleTvCabinetClick(texts);
+                if (handled) return;
+            }
+
+            if (id === 'photo-frame') {
+                const handled = handlePhotoFrameClick(texts);
                 if (handled) return;
             }
             const play = sfxMap[id];
@@ -936,6 +1021,7 @@ function startGame() {
     initDialogueHandlers();
     initAudio();
     initUIControls();
+    setPhotoFrameEnabled(false);
     initInteractions();
     initDoorAudioForNavButtons();
     initIntroScene();
