@@ -113,7 +113,31 @@ window.GAME_CONFIG = {
         
     },
     objectConfigs: {
+        // livingroom
+        'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
+        'aroma-candle': { padding: '1%', top: '62.5%', left: '73%', rotation: '2deg' },
+        'switch-console': { padding: '2% 2.5%', top: '64%', left: '77%', rotation: '10deg' },
+        'tv-cabinet': { padding: '3% 12%', top: '75%', left: '77%', rotation: '20deg' },
+        'photo-frame': { padding: '2.5% 4%', top: '68%', left: '83%' },
+        doorToHallwayFromLivingroom: { padding: '8% 1.5%', top: '48%', left: '66%' },
+
+        // bedroom
         wardrobe: { padding: '25% 7%', top: '50%', left: '7%' },
+        'landscape-venice-photo': { padding: '7% 10%', top: '39%', left: '40%' },
+        'vanity-table': { padding: '5% 10%', top: '68%', left: '88%' },
+        'bedroom-drawer': { padding: '3% 6%', top: '70%', left: '80%' },
+        'light-switch': { padding: '0.8% 0.6%', top: '48.5%', left: '17.8%' },
+        doorToHallwayFromBedroom: { padding: '8% 3%', top: '39%', left: '23%' },
+
+        // hallway
+        'bathroom-door': { padding: '17% 12%', top: '52%', left: '47%' },
+        'swan-photo': { padding: '8% 8%', top: '39%', left: '12%' },
+        doorToLivingroomFromHallway: { padding: '47% 10%', top: '54%', left: '90%' },
+        doorToBedroomFromHallway: { padding: '3%', top: '96%', left: '49%' },
+        hintToBedroomFromHallway: { padding: '0', top: '95%', left: '49%' },
+        doorToStudyFromHallway: { padding: '20% 3%', top: '53%', left: '26%' },
+
+        // study
         monitor: { padding: '3% 7%', top: '58%', left: '48%' },
         violin: { padding: '6% 2%', top: '38%', left: '22%' },
         guitar: { padding: '11% 4%', top: '38%', left: '14%' },
@@ -124,28 +148,50 @@ window.GAME_CONFIG = {
         'sakura-photo': { padding: '1.5% 1.5%', top: '34%', left: '52%' },
         'sunset-photo': { padding: '1.5% 1.5%', top: '45%', left: '48%' },
         'couple-photo': { padding: '2.5% 2.5%', top: '43.5%', left: '53.5%' },
-        'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
-        'landscape-venice-photo': { padding: '7% 10%', top: '39%', left: '40%' },
-        'tv-cabinet': { padding: '7% 10%', top: '66%', left: '44%' },
-        'photo-frame': { padding: '2.5% 2.5%', top: '66%', left: '48%' },
-        'vanity-table': { padding: '5% 10%', top: '68%', left: '88%' },
-        'bedroom-drawer': { padding: '3% 6%', top: '70%', left: '80%' },
         'balcony-chair': { padding: '6%', top: '78%', left: '84%' },
         'bbq-grill': { padding: '3% 5%', top: '58%', left: '80%' },
-        'light-switch': { padding: '0.8% 0.6%', top: '48.5%', left: '17.8%' },
-        'bathroom-door': { padding: '17% 12%', top: '52%', left: '47%' },
-        'swan-photo': { padding: '8% 8%', top: '39%', left: '12%' },
-        doorToHallwayFromLivingroom: { padding: '8% 2%', top: '48%', left: '66%' },
-        doorToHallwayFromBedroom: { padding: '8% 3%', top: '39%', left: '23%' },
-        doorToLivingroomFromHallway: { padding: '47% 10%', top: '54%', left: '90%' },
-        doorToBedroomFromHallway: { padding: '3%', top: '96%', left: '49%' },
-        hintToBedroomFromHallway: { padding: '0', top: '95%', left: '49%' },
-        doorToStudyFromHallway: { padding: '20% 3%', top: '53%', left: '26%' },
         doorToHallwayFromStudy: { padding: '3%', top: '96%', left: '49%' },
         hintToHallwayFromStudy: { padding: '0', top: '95%', left: '49%' }
     },
     interactions: [
+        // livingroom
+        { id: 'aroma-candle', texts: [
+            '香薰蜡烛点着，淡淡的木质香让客厅更放松。',
+            '我送他的第一个礼物也是这个，当时纠结了好久。',
+            '不过他好像没有很喜欢，真是个难搞的家伙。'
+        ] },
+        { id: 'switch-console', texts: [
+            'Switch正插在底座上，Joy-Con还在充电。',
+            '我们第一次一起玩的游戏好像是《双人成行》，我们的合作越来越有默契。',
+            '印象最深的是暴风雪的关卡，我们在大风雪里相互搀扶着前行。'
+        ] },
+        { id: 'tv-cabinet', texts: [
+            '电视柜的抽屉里塞满了遥控器和说明书，啊哈，找到了一把螺丝刀！',
+            '电视柜上摆了不少东西，当时为了安装它，我们两个人花了一下午加一晚上的时间。'
+        ]},
+        { id: 'photo-frame', texts: [
+            '相框倒在那里……应该是背面支架的螺丝松了。',
+            '照片里两个人披着毛毯，那天虽然柏林阳光明媚，但风特别大……',
+            '呼，修好了……诶？相框背面怎么有个数字3……'
+        ] },
+
+        // bedroom
         { id: 'wardrobe', texts: ['衣柜里放满了衣服，看起来很整洁，有一股洗衣液的香味。'] },
+        { id: 'landscape-venice-photo', texts: ['日落时分，威尼斯的水面闪烁着金光，多拉贡们在悠闲交错地游行。'] },
+        { id: 'vanity-table', texts: [
+            '梳妆台上摆着一些护肤品，下面的抽屉没关好，顺手带上吧。',
+            '梳妆台上摆着一些护肤品，找个时间收拾一下吧。'
+        ] },
+        { id: 'bedroom-drawer', texts: [
+            '好像抽屉里有什么东西卡住了……',
+            '这是那时圣诞节送我的，一对栀子花，当时好喜欢……'
+        ] },
+
+        // hallway
+        { id: 'bathroom-door', texts: ['浴室里传来哗啦啦的水声，透过玻璃看里面热气蒸腾，应该是家里那位正在洗澡。'] },
+        { id: 'swan-photo', texts: ['湖面像雕塑一样，波光粼粼。'] },
+
+        // study
         { id: 'monitor', texts: [
             '主屏幕上显示着一些看不懂的代码，似乎是一个游戏demo。',
             '另一个屏幕上还在生成一些图片，不知道家里那位要干嘛。',
@@ -159,26 +205,7 @@ window.GAME_CONFIG = {
         { id: 'sakura-photo', texts: ['参加摄影比赛落选的樱花，不过照片的色调很柔和。'] },
         { id: 'sunset-photo', texts: ['加尔达湖边的日落，安静而美好。'] },
         { id: 'couple-photo', texts: ['这次合照里两个人的笑容很自然，挺难得。'] },
-        { id: 'landscape-venice-photo', texts: ['日落时分，威尼斯的水面闪烁着金光，多拉贡们在悠闲交错地游行。'] },
-        { id: 'tv-cabinet', texts: [
-            '电视柜上摆了不少东西，不过相册怎么倒了呢……',
-            '电视柜上摆了不少东西，当时为了安装它，我们两个人花了一下午加一晚上的时间。'
-        ]},
-        { id: 'photo-frame', texts: [
-            '照片里两个人披着毛毯，那天虽然柏林阳光明媚，但风特别大……',
-            '呼，摆正了……诶？相框背面怎么有个数字3……'
-        ] },
-        { id: 'vanity-table', texts: [
-            '梳妆台上摆着一些护肤品，下面的抽屉没关好，顺手带上吧。',
-            '梳妆台上摆着一些护肤品，找个时间收拾一下吧。'
-        ] },
-        { id: 'bedroom-drawer', texts: [
-            '好像抽屉里有什么东西卡住了……',
-            '这是那时圣诞节送我的，一对栀子花，当时好喜欢……'
-        ] },
         { id: 'balcony-chair', texts: ['藤椅很适合在阳台上发呆一下午。'] },
-        { id: 'bbq-grill', texts: ['烧烤炉还留着一股炭火味，比几年前买的那个小电烤炉烤的更香了。'] },
-        { id: 'bathroom-door', texts: ['浴室里传来哗啦啦的水声，透过玻璃看里面热气蒸腾，应该是家里那位正在洗澡。'] },
-        { id: 'swan-photo', texts: ['湖面像雕塑一样，波光粼粼。'] }
+        { id: 'bbq-grill', texts: ['烧烤炉还留着一股炭火味，比几年前买的那个小电烤炉烤的更香了。'] }
     ]
 };

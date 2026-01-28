@@ -200,21 +200,19 @@ body {
     cursor: pointer;
 }
 
-/* 提升梳妆台点击层级，使其在抽屉之上 */
+#tv-cabinet,
 #vanity-table {
     z-index: 12;
 }
-
+#photo-frame,
 #bedroom-drawer {
     z-index: 11;
 }
 
-#tv-cabinet {
-    z-index: 12;
-}
 
-#photo-frame {
-    z-index: 11;
+#aroma-candle,
+#switch-console {
+    z-index: 13;
 }
 
 .inventory-nav {

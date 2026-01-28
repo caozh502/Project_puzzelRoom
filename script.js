@@ -299,6 +299,15 @@ function updatePositions() {
         el.style.top = `${topPercent * 100}%`;
         el.style.left = `${leftPercent * 100}%`;
 
+        // 应用旋转（如有配置），保持居中位移
+        const rotation = config.rotation;
+        const transformParts = ['translate(-50%, -50%)'];
+        if (rotation !== undefined && rotation !== null && rotation !== '') {
+            const rot = typeof rotation === 'number' ? `${rotation}deg` : `${rotation}`;
+            transformParts.push(`rotate(${rot})`);
+        }
+        el.style.transform = transformParts.join(' ');
+
         // 解析padding: 'top% right%' -> top/bottom: top% of 容器高度, left/right: right% of 容器宽度
         const paddingParts = config.padding.split(' ');
         const paddingTopPercent = parseFloat(paddingParts[0]) / 100;
@@ -319,7 +328,7 @@ function updatePositions() {
             if (el.closest('.scene') === currentScene) {
                 const debugInfo = document.createElement('div');
                 debugInfo.className = 'debug-info';
-                debugInfo.innerHTML = `<small>@${originalLabel}<br>Top: ${newTop.toFixed(0)}px, Left: ${newLeft.toFixed(0)}px<br>Padding: ${Math.round(paddingTop)}px ${Math.round(paddingRight)}px</small>`;
+                debugInfo.innerHTML = `<small>@${originalLabel}</small>`;
                 debugInfo.style.top = `${newTop}px`; // 与物品顶部对齐
                 debugInfo.style.left = `${newLeft + el.offsetWidth / 2 + 5}px`; // 在物品视觉右侧5px
                 container.appendChild(debugInfo);
@@ -810,16 +819,6 @@ function setDrawerEnabled(enabled) {
     swapHierarchy(bedroomDrawer, vanityTable, enabled);
 }
 
-function setPhotoFrameEnabled(enabled, options = {}) {
-    const { revertHierarchy = true } = options;
-    gameState.flags.photoFrameEnabled = enabled;
-    if (photoFrame) {
-        if (enabled) photoFrame.removeAttribute('aria-disabled');
-        else photoFrame.setAttribute('aria-disabled', 'true');
-    }
-    swapHierarchy(photoFrame, tvCabinet, enabled);
-}
-
 // 梳妆台/抽屉耳环流程：拆分启动与完成，便于复用
 function queueDrawerEarringsReveal() {
     gameState.flags.drawerPendingEarrings = true;
@@ -855,17 +854,19 @@ function completePhotoFrameFlow() {
 
     const frameCfg = INTERACTIONS.find(i => i.id === 'photo-frame');
     const texts = frameCfg && Array.isArray(frameCfg.texts) ? frameCfg.texts : [];
-    const secondLine = texts[1] || FALLBACK_DIALOGUE;
-    if (secondLine) gameState.dialogueQueue.push(secondLine);
+    const thirdLine = texts[2] || FALLBACK_DIALOGUE;
+    if (thirdLine) gameState.dialogueQueue.push(thirdLine);
 
-    markKeyItemFound('photo-frame', { line: secondLine, image: frameSrc });
+    markKeyItemFound('photo-frame', { line: thirdLine, image: frameSrc });
 
-    // 关闭互动但保留层级，等待背景替换后再恢复
-    setPhotoFrameEnabled(false);
     gameState.flags.playPhotoFrameBgSwap = true;
     gameState.flags.photoFramePendingReveal = false;
     gameState.flags.photoFrameFinished = true;
+    gameState.flags.photoFrameReplayReady = true;
     gameState.interactionIndex['tv-cabinet'] = Math.max(gameState.interactionIndex['tv-cabinet'] || 0, 1);
+    if (Array.isArray(texts) && texts.length > 0) {
+        gameState.interactionIndex['photo-frame'] = texts.length - 1;
+    }
 }
 
 function handleVanityClick(texts) {
@@ -895,7 +896,6 @@ function handleDrawerClick(texts) {
 
 function handleTvCabinetClick(texts) {
     if (!gameState.flags.photoFrameFinished) {
-        setPhotoFrameEnabled(true);
         const arr = Array.isArray(texts) ? texts : [];
         const first = arr[0] || FALLBACK_DIALOGUE;
         showDialogue(first);
@@ -907,11 +907,24 @@ function handleTvCabinetClick(texts) {
 }
 
 function handlePhotoFrameClick(texts) {
-    if (gameState.flags.photoFrameFinished) return true;
-    if (!gameState.flags.photoFrameEnabled) return true;
+    if (gameState.flags.photoFrameFinished) {
+        // 完成后停留在最后一句，复用重播逻辑
+        replayCurrentKeyItem();
+        return true;
+    }
     const arr = Array.isArray(texts) ? texts : [];
     const firstLine = arr[0] || FALLBACK_DIALOGUE;
-    showDialogue(firstLine);
+    const secondLine = arr[1] || firstLine;
+
+    // 电视柜未点击：只展示第一句，不触发展示
+    if (!gameState.flags.tvCabinetInteracted) {
+        showDialogue(firstLine);
+        gameState.interactionIndex['photo-frame'] = 0;
+        return true;
+    }
+
+    // 电视柜已点击：从第二句开始，等待对话框点击时进入第三句并弹出图片
+    showDialogue(secondLine || FALLBACK_DIALOGUE);
     queuePhotoFrameReveal();
     return true;
 }
@@ -1021,7 +1034,6 @@ function startGame() {
     initDialogueHandlers();
     initAudio();
     initUIControls();
-    setPhotoFrameEnabled(false);
     initInteractions();
     initDoorAudioForNavButtons();
     initIntroScene();
