@@ -1,7 +1,7 @@
 // 数据驱动配置：场景、交互文本、物品位置
 window.GAME_CONFIG = {
     startScene: 'intro',
-    introEndScene: 'livingroom',
+    introEndScene: 'study',
     initialState: {
         inventory: [],
         flags: {},
@@ -20,7 +20,11 @@ window.GAME_CONFIG = {
         pianoSfx: { volume: 0.3 },
         showerSfx: { volume: 0.5, loop: true },
         drawerCloseSfx: { volume: 0.5 },
-        drillScrewSfx: { volume: 0.5 }
+        drillScrewSfx: { volume: 0.5 },
+        fridgeOpenSfx: { volume: 0.6 },
+        fridgeCloseSfx: { volume: 0.6 },
+        openBottleSfx: { volume: 0.6 },
+        drinkSojuSfx: { volume: 0.6 }
     },
     audioSources: {
         detectiveBGM: 'assets/Audio/loveDetective_BGM.mp3',
@@ -35,7 +39,11 @@ window.GAME_CONFIG = {
         violinSfx: 'assets/Audio/violin_pizz_SFX.m4a',
         pianoSfx: 'assets/Audio/piano_SFX.mp3',
         drawerCloseSfx: 'assets/Audio/drawerClose_SFX.mp3',
-        drillScrewSfx: 'assets/Audio/drillScrew_SFX.mp3'
+        drillScrewSfx: 'assets/Audio/drillScrew_SFX.mp3',
+        fridgeOpenSfx: 'assets/Audio/fridgeOpen_SFX.mp3',
+        fridgeCloseSfx: 'assets/Audio/fridgeClose_SFX.mp3',
+        openBottleSfx: 'assets/Audio/openBottle_SFX.mp3',
+        drinkSojuSfx: 'assets/Audio/drinkSoju.mp3'
     },
     // 交互展示图片与其他独立图片的统一映射
     imageSources: {
@@ -47,7 +55,9 @@ window.GAME_CONFIG = {
         'swan-photo': 'assets/Picture/swan.JPG',
         'gift': 'assets/Picture/gift.png',
         'earrings': 'assets/Picture/earrings.png',
-        'photo-frame': 'assets/Picture/instax.png'
+        'photo-frame': 'assets/Picture/instax.png',
+        'soju': 'assets/Picture/soju.png',
+        'beer-opener': 'assets/Picture/bottle_opener.png'
     },
     // 关键物品列表（发现时会记录到“找到的关键物品”）
     keyItems: [
@@ -56,7 +66,8 @@ window.GAME_CONFIG = {
         { id: 'electric-piano', name: '钢琴琴键' },
         { id: 'soju', name: '烧酒' },
         { id: 'beer-opener', name: '啤酒起子' },
-        { id: 'screwdriver', name: '螺丝刀' }
+        { id: 'screwdriver', name: '螺丝刀' },
+        { id: 'fridge-note', name: '冰箱字条' }
     ],
     scenes: {
         intro: {
@@ -121,7 +132,8 @@ window.GAME_CONFIG = {
         'switch-console': { padding: '2% 2.5%', top: '64%', left: '77%', rotation: '10deg' },
         'snack-box': { padding: '2% 4.5%', top: '78%', left: '47.5%'},
         'shark-plush': { padding: '3% 7%', top: '52%', left: '17%'},
-        'fridge-note': { padding: '3% 3%', top: '47%', left: '42%'},
+        'fridge-note': { padding: '2.8% 2.5%', top: '47%', left: '42%'},
+        'fridge-door': { padding: '2.8% 2.5%', top: '47%', left: '42%'},
         'tv-cabinet': { padding: '3% 12%', top: '75%', left: '77%', rotation: '20deg' },
         'photo-frame': { padding: '2.5% 4%', top: '68%', left: '83%' },
         doorToHallwayFromLivingroom: { padding: '8% 1.5%', top: '48%', left: '66%' },
@@ -183,8 +195,14 @@ window.GAME_CONFIG = {
             '冰箱门上贴着一些字条，第一张：面包和Hafer不够了，记得买哦～<auto>',
             '第二张：今晚一起看新出的《罗小黑战记3》吗？',
             '第三张：周末一起去那家的新开餐厅试试吧！',
-            '第四张：我在冰箱里放了你最爱的葡萄烧酒，记得喝掉哦～',
-            '确实有点口渴了，想喝点东西……'
+            '第四张：可爱的小sagwa，我在冰箱里放了你最爱的葡萄烧酒，记得喝掉哦～',
+            '谁是小sagwa！ヽ(｀Д´)ﾉ不过……确实有点口渴了，想喝点东西呢<stop>',
+            '感觉有点口渴，想喝点饮料……看到说冰箱里有葡萄味烧酒。'
+        ] },
+        { id: 'fridge-door', texts: [
+            '果然有一瓶……不过，我可爱的开瓶器去哪里了？',
+            '唔…好好喝呀！(★ω★）咦？瓶盖上怎么写着数字：7',
+            '是否要用猫爪爪开瓶器打开烧酒？'
         ] },
         { id: 'tv-cabinet', texts: [
             '电视柜的抽屉里塞满了遥控器和说明书。',
@@ -222,9 +240,10 @@ window.GAME_CONFIG = {
             '这把十字螺丝刀有些旧了，手柄还有点松动，但好在还能用。'
         ]},
         { id: 'drawer-cabinet', texts: [
-            '抽屉柜的木纹被磨得发亮，拉手冰凉，像是刚被碰过。',
-            '上层抽屉微微敞开，里面塞着笔记本和几张散落的便条。',
-            '最下面的抽屉很重，似乎压着什么厚厚的文件和旧相册。'
+            '抽屉柜是从一个二手卖家那里超低价买来的，但是质量还不错。',
+            '印象里开瓶器好像是放在这里了，让我找找看',
+            '没错就是这个，我的猫爪爪开瓶器！哈哈，感谢万能的TB~',
+            '抽屉柜是从一个二手卖家那里超低价买来的，但是质量还不错。'
         ]},
         { id: 'violin', texts: ['小提琴安静地靠在角落，漆面有轻微的磨损。'] },
         { id: 'guitar', texts: ['吉他的音好像不太准，看来有一阵子没练习了。']},

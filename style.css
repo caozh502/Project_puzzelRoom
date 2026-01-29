@@ -221,6 +221,10 @@ body {
     z-index: 13;
 }
 
+#fridge-door {
+    z-index: 11;
+}
+
 .inventory-nav {
     background: rgba(255,255,255,0.15);
     border: 1px solid rgba(255,255,255,0.35);

@@ -13,6 +13,7 @@ let currentKeyItemIndex = 0;
 
 // 对话标签：在文本中加入此标记，可在单次触发后通过对话框点击继续播放后续行
 const AUTO_ADVANCE_TAG = '<auto>';
+const STOP_ADVANCE_TAG = '<stop>';
 
 // 统一图片资源映射（从配置中获取）
 const IMAGE_SOURCES = CONFIG.imageSources || {};
@@ -51,9 +52,10 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 音频变量
 let detectiveBGM, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
-let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx, drillScrewSfx;
+let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
+let fridgeNote, fridgeDoor;
 let choiceOverlay, choiceTextEl, choiceYesBtn, choiceNoBtn;
 let choiceHandlers = null;
 let inventoryTextEl, inventoryPrevBtn, inventoryNextBtn;
@@ -474,6 +476,7 @@ function onDialogueBoxClick() {
     // 若存在后续队列，则显示下一条对话
     if (gameState.dialogueQueue.length > 0) {
         const next = gameState.dialogueQueue.shift();
+        handleDrawerCabinetQueuedReveal(next);
         showDialogue(next);
         return;
     }
@@ -566,6 +569,10 @@ function cacheElements() {
     showerSfx = document.getElementById('shower-sfx');
     drawerCloseSfx = document.getElementById('drawer-close-sfx');
     drillScrewSfx = document.getElementById('drill-screw-sfx');
+    fridgeOpenSfx = document.getElementById('fridge-open-sfx');
+    fridgeCloseSfx = document.getElementById('fridge-close-sfx');
+    openBottleSfx = document.getElementById('open-bottle-sfx');
+    drinkSojuSfx = document.getElementById('drink-soju-sfx');
     muteBtn = document.getElementById('mute-btn');
     hideBtn = document.getElementById('hide-btn');
     lightSwitch = document.getElementById('light-switch');
@@ -573,6 +580,8 @@ function cacheElements() {
     overlayImage = document.getElementById('overlay-image');
     startDot = document.getElementById('start-dot');
     giftBox = document.getElementById('gift-box');
+    fridgeNote = document.getElementById('fridge-note');
+    fridgeDoor = document.getElementById('fridge-door');
     bedroomDrawer = document.getElementById('bedroom-drawer');
     vanityTable = document.getElementById('vanity-table');
     tvCabinet = document.getElementById('tv-cabinet');
@@ -639,7 +648,11 @@ function initAudio() {
         pianoSfx,
         showerSfx,
         drawerCloseSfx,
-        drillScrewSfx
+        drillScrewSfx,
+        fridgeOpenSfx,
+        fridgeCloseSfx,
+        openBottleSfx,
+        drinkSojuSfx
     };
 
     Object.keys(audioMap).forEach(key => {
@@ -674,6 +687,10 @@ function initAudio() {
             if (showerSfx) showerSfx.muted = isMuted;
             if (drawerCloseSfx) drawerCloseSfx.muted = isMuted;
             if (drillScrewSfx) drillScrewSfx.muted = isMuted;
+            if (fridgeOpenSfx) fridgeOpenSfx.muted = isMuted;
+            if (fridgeCloseSfx) fridgeCloseSfx.muted = isMuted;
+            if (openBottleSfx) openBottleSfx.muted = isMuted;
+            if (drinkSojuSfx) drinkSojuSfx.muted = isMuted;
             muteBtn.textContent = isMuted ? '🔇' : '🔊';
         });
     }
@@ -862,12 +879,122 @@ function playPhotoFrameBgSwapIfNeeded() {
     }
 }
 
+function playFridgeCloseIfNeeded() {
+    if (!gameState.flags.fridgeDoorPendingCloseSfx) return;
+    playSfx(fridgeCloseSfx);
+    gameState.flags.fridgeDoorPendingCloseSfx = false;
+}
+
+function playSojuOpeningSequence(onComplete) {
+    const finalCb = typeof onComplete === 'function' ? onComplete : () => {};
+    const seq = [openBottleSfx, drinkSojuSfx].filter(Boolean);
+    if (isMuted || seq.length === 0) {
+        finalCb();
+        return;
+    }
+
+    const playAt = (idx) => {
+        if (idx >= seq.length) {
+            finalCb();
+            return;
+        }
+        const audio = seq[idx];
+        if (!audio) {
+            playAt(idx + 1);
+            return;
+        }
+        audio.currentTime = 0;
+        const cleanup = () => {
+            audio.onended = null;
+            audio.onerror = null;
+        };
+        audio.onended = () => {
+            cleanup();
+            playAt(idx + 1);
+        };
+        audio.onerror = () => {
+            cleanup();
+            playAt(idx + 1);
+        };
+        const played = audio.play();
+        if (played && typeof played.then === 'function') {
+            played.catch(() => {
+                cleanup();
+                playAt(idx + 1);
+            });
+        }
+    };
+
+    playAt(0);
+}
+
+function handleDrawerCabinetQueuedReveal(nextLine) {
+    if (!gameState.flags.drawerCabinetPendingOpenerLine) return false;
+    if (nextLine !== gameState.flags.drawerCabinetPendingOpenerLine) return false;
+
+    const openerImg = IMAGE_SOURCES['beer-opener'];
+    if (openerImg) openImageOverlay(openerImg, { fadeIn: true });
+    markKeyItemFound('beer-opener', { line: nextLine, image: openerImg });
+    gameState.flags.drawerCabinetFinished = true;
+    gameState.flags.drawerCabinetPendingOpenerLine = null;
+    const lastIdx = typeof gameState.flags.drawerCabinetLastIndex === 'number'
+        ? gameState.flags.drawerCabinetLastIndex
+        : 3;
+    gameState.interactionIndex['drawer-cabinet'] = lastIdx;
+    return true;
+}
+
+function handleFridgeDoorClick(texts) {
+    playSfx(fridgeOpenSfx);
+    const sojuImg = IMAGE_SOURCES['soju'];
+    if (sojuImg) openImageOverlay(sojuImg, { fadeIn: true });
+
+    const arr = Array.isArray(texts) ? texts : [];
+    const baseLine = arr[0] || FALLBACK_DIALOGUE;
+    const finalLine = arr[1] || FALLBACK_DIALOGUE;
+    const choicePrompt = arr[2] || FALLBACK_DIALOGUE;
+
+    const hasOpener = foundKeyItemIds.has('beer-opener');
+    const hasSojuOpened = gameState.flags.sojuOpened;
+
+    if (hasOpener && !hasSojuOpened && !gameState.flags.sojuOpenInProgress) {
+        showChoiceOverlay(choicePrompt, {
+            onYes: () => {
+                gameState.flags.sojuOpenInProgress = true;
+                playSojuOpeningSequence(() => {
+                    showDialogue(finalLine);
+                    markKeyItemFound('soju', { line: finalLine, image: sojuImg });
+                    gameState.flags.sojuOpened = true;
+                    gameState.flags.sojuOpenInProgress = false;
+                });
+            },
+            onNo: () => {
+                showDialogue(baseLine);
+            }
+        });
+        gameState.flags.fridgeDoorPendingCloseSfx = true;
+        return true;
+    }
+
+    if (hasSojuOpened) {
+        showDialogue(finalLine);
+    } else {
+        showDialogue(baseLine);
+        if (!hasOpener && !hasSojuOpened) {
+            gameState.flags.sojuSeenNeedsOpener = true;
+        }
+    }
+    gameState.flags.fridgeDoorPendingCloseSfx = true;
+    return true;
+}
+
 function closeOverlayAndDialogue() {
     closeImageOverlay();
     closeDialogueBox();
     hideChoiceOverlay();
     playDrawerCloseIfNeeded();
     playPhotoFrameBgSwapIfNeeded();
+    playFridgeCloseIfNeeded();
 }
 
 function swapHierarchy(primaryEl, secondaryEl, swapped, options = {}) {
@@ -991,6 +1118,37 @@ function handleDrawerClick(texts) {
     return true;
 }
 
+function handleDrawerCabinetClick(texts) {
+    const arr = Array.isArray(texts) ? texts : [];
+    const first = arr[0] || FALLBACK_DIALOGUE;
+    const second = arr[1] || first;
+    const third = arr[2] || second;
+    const last = arr[arr.length - 1] || third;
+    const lastIdx = arr.length > 0 ? arr.length - 1 : 0;
+
+    // 完成后保持在最后一句
+    if (gameState.flags.drawerCabinetFinished) {
+        showDialogue(last);
+        return true;
+    }
+
+    const hasSoju = foundKeyItemIds.has('soju');
+    const sawSojuNeedsOpener = !!gameState.flags.sojuSeenNeedsOpener;
+    if (!hasSoju && !sawSojuNeedsOpener) {
+        showDialogue(first);
+        gameState.interactionIndex['drawer-cabinet'] = 0;
+        return true;
+    }
+
+    // 已找到烧酒：先显示第二句，并将第三句排入队列，第三句出现时弹出开瓶器
+    showDialogue(second);
+    gameState.dialogueQueue.push(third);
+    gameState.flags.drawerCabinetPendingOpenerLine = third;
+    gameState.flags.drawerCabinetLastIndex = lastIdx;
+    gameState.interactionIndex['drawer-cabinet'] = 2;
+    return true;
+}
+
 function handleTvCabinetClick(texts) {
     const arr = Array.isArray(texts) ? texts : [];
     const first = arr[0] || FALLBACK_DIALOGUE;
@@ -1105,8 +1263,22 @@ function initInteractions() {
                 if (handled) return;
             }
 
+            if (id === 'drawer-cabinet') {
+                const handled = handleDrawerCabinetClick(texts);
+                if (handled) return;
+            }
+
             if (id === 'photo-frame') {
                 const handled = handlePhotoFrameClick(texts);
+                if (handled) return;
+            }
+
+            if (id === 'fridge-note' && !gameState.flags.fridgeDoorSwapped) {
+                swapHierarchy(fridgeDoor, fridgeNote, true, { primaryZ: '13', secondaryZ: '11', flagKey: 'fridgeDoorSwapped' });
+            }
+
+            if (id === 'fridge-door') {
+                const handled = handleFridgeDoorClick(texts);
                 if (handled) return;
             }
             const play = sfxMap[id];
@@ -1119,19 +1291,36 @@ function initInteractions() {
                 const effectiveIdx = Math.min(idx, arr.length - 1);
                 const rawText = arr[effectiveIdx];
                 const hasAuto = typeof rawText === 'string' && rawText.includes(AUTO_ADVANCE_TAG);
-                const toShow = typeof rawText === 'string'
-                    ? rawText.replace(AUTO_ADVANCE_TAG, '').trim()
-                    : rawText;
+                const hasStop = typeof rawText === 'string' && rawText.includes(STOP_ADVANCE_TAG);
+                const sanitize = (t) => (typeof t === 'string'
+                    ? t.replace(AUTO_ADVANCE_TAG, '').replace(STOP_ADVANCE_TAG, '').trim()
+                    : t);
+                const toShow = sanitize(rawText);
 
                 // 若标记自动推进，则把后续行排入队列，单次触发后无需再次点击物品
                 if (hasAuto) {
-                    const rest = arr.slice(effectiveIdx + 1)
-                        .map(t => (typeof t === 'string' ? t.replace(AUTO_ADVANCE_TAG, '').trim() : t))
-                        .filter(Boolean);
+                    const rest = [];
+                    let stopIdx = null;
+                    for (let offset = 1; effectiveIdx + offset < arr.length; offset++) {
+                        const cand = arr[effectiveIdx + offset];
+                        const candHasStop = typeof cand === 'string' && cand.includes(STOP_ADVANCE_TAG);
+                        const cleaned = sanitize(cand);
+                        if (cleaned) rest.push(cleaned);
+                        if (candHasStop) {
+                            stopIdx = effectiveIdx + offset;
+                            break;
+                        }
+                    }
                     if (rest.length > 0) {
                         gameState.dialogueQueue.push(...rest);
                     }
-                    gameState.interactionIndex[id] = loop ? (effectiveIdx + 1) % arr.length : arr.length - 1;
+                    if (loop) {
+                        gameState.interactionIndex[id] = (effectiveIdx + 1) % arr.length;
+                    } else if (stopIdx !== null) {
+                        gameState.interactionIndex[id] = stopIdx;
+                    } else {
+                        gameState.interactionIndex[id] = arr.length - 1;
+                    }
                 } else {
                     const next = effectiveIdx + 1;
                     gameState.interactionIndex[id] = loop
@@ -1144,7 +1333,15 @@ function initInteractions() {
             const discoveredLine = Array.isArray(texts) && texts.length > 0
                 ? texts[texts.length - 1]
                 : undefined;
-            markKeyItemFound(id, { line: discoveredLine, image: imageSrc });
+            // 冰箱字条：点击后加入关键物品，使用最后一句（口渴台词）
+            if (id === 'fridge-note') {
+                markKeyItemFound(id, {
+                    line: '确实有点口渴了，想喝点东西……想起来冰箱里有葡萄味烧酒。',
+                    image: imageSrc
+                });
+            } else {
+                markKeyItemFound(id, { line: discoveredLine, image: imageSrc });
+            }
         });
     });
 }
