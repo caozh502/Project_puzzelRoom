@@ -50,7 +50,7 @@ let nextTipTimer = null;
 let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 音频变量
-let bgm, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
+let detectiveBGM, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
 let guitarSfx, violinSfx, pianoSfx, showerSfx, deskCloseSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
@@ -547,7 +547,7 @@ function updateInventory() {
 function cacheElements() {
     diagBox = document.getElementById('dialogue-box');
     diagText = document.getElementById('dialogue-text');
-    bgm = document.getElementById('bgm');
+    detectiveBGM = document.getElementById('detectiveBGM');
     clickSfx = document.getElementById('click-sfx');
     lightSfx = document.getElementById('light-sfx');
     startDotSfx = document.getElementById('startdot-sfx');
@@ -615,7 +615,7 @@ function initDialogueHandlers() {
 
 function initAudio() {
     const audioMap = {
-        bgm,
+        detectiveBGM,
         clickSfx,
         lightSfx,
         startDotSfx,
@@ -648,7 +648,7 @@ function initAudio() {
     if (muteBtn) {
         muteBtn.addEventListener('click', () => {
             isMuted = !isMuted;
-            if (bgm) bgm.muted = isMuted;
+            if (detectiveBGM) detectiveBGM.muted = isMuted;
             if (clickSfx) clickSfx.muted = isMuted;
             if (lightSfx) lightSfx.muted = isMuted;
             if (startDotSfx) startDotSfx.muted = isMuted;
