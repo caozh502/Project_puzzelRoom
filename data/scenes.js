@@ -1,7 +1,7 @@
 // 数据驱动配置：场景、交互文本、物品位置
 window.GAME_CONFIG = {
     startScene: 'intro',
-    introEndScene: 'study',
+    introEndScene: 'livingroom',
     initialState: {
         inventory: [],
         flags: {},
@@ -19,7 +19,8 @@ window.GAME_CONFIG = {
         violinSfx: { volume: 0.3 },
         pianoSfx: { volume: 0.3 },
         showerSfx: { volume: 0.5, loop: true },
-        drawerCloseSfx: { volume: 0.5 }
+        drawerCloseSfx: { volume: 0.5 },
+        drillScrewSfx: { volume: 0.5 }
     },
     audioSources: {
         detectiveBGM: 'assets/Audio/loveDetective_BGM.mp3',
@@ -33,7 +34,8 @@ window.GAME_CONFIG = {
         guitarSfx: 'assets/Audio/guitar_pizz_SFX.m4a',
         violinSfx: 'assets/Audio/violin_pizz_SFX.m4a',
         pianoSfx: 'assets/Audio/piano_SFX.mp3',
-        drawerCloseSfx: 'assets/Audio/drawerClose_SFX.mp3'
+        drawerCloseSfx: 'assets/Audio/drawerClose_SFX.mp3',
+        drillScrewSfx: 'assets/Audio/drillScrew_SFX.mp3'
     },
     // 交互展示图片与其他独立图片的统一映射
     imageSources: {
@@ -53,7 +55,8 @@ window.GAME_CONFIG = {
         { id: 'photo-frame', name: '相框' },
         { id: 'electric-piano', name: '钢琴琴键' },
         { id: 'soju', name: '烧酒' },
-        { id: 'beer-opener', name: '啤酒起子' }
+        { id: 'beer-opener', name: '啤酒起子' },
+        { id: 'screwdriver', name: '螺丝刀' }
     ],
     scenes: {
         intro: {
@@ -190,7 +193,7 @@ window.GAME_CONFIG = {
         ]},
         { id: 'photo-frame', texts: [
             '相框倒在那里……应该是背面支架的螺丝松了。',
-            '照片里两个人披着毛毯，那天虽然柏林阳光明媚，但风特别大……',
+            '照片里两个人披着毛毯，那天虽然柏林阳光明媚，但风特别大……好了，先修好它。',
             '呼，修好了……诶？相框背面怎么有个数字3……'
         ] },
 
@@ -202,7 +205,7 @@ window.GAME_CONFIG = {
             '梳妆台上摆着一些护肤品，找个时间收拾一下吧。'
         ] },
         { id: 'bedroom-drawer', texts: [
-            '好像抽屉里有什么东西卡住了…………………………………………啊！…………………………………………原来是这一对耳环呀',
+            '好像抽屉里有什么东西卡住了…………………………啊！…………………………原来是这一对耳环呀',
             '这是那时圣诞节送我的，一对栀子花，当时好喜欢……'
         ] },
 
@@ -215,6 +218,9 @@ window.GAME_CONFIG = {
             '主屏幕上显示着一些看不懂的代码，似乎是一个游戏demo。',
             '另一个屏幕上还在生成一些图片，不知道家里那位要干嘛。',
         ]}, 
+        { id: 'screwdriver', texts: [
+            '这把十字螺丝刀有些旧了，手柄还有点松动，但好在还能用。'
+        ]},
         { id: 'drawer-cabinet', texts: [
             '抽屉柜的木纹被磨得发亮，拉手冰凉，像是刚被碰过。',
             '上层抽屉微微敞开，里面塞着笔记本和几张散落的便条。',

@@ -51,9 +51,11 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 音频变量
 let detectiveBGM, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
-let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx;
+let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx, drillScrewSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
+let choiceOverlay, choiceTextEl, choiceYesBtn, choiceNoBtn;
+let choiceHandlers = null;
 let inventoryTextEl, inventoryPrevBtn, inventoryNextBtn;
 // 加载覆盖层元素
 let loadingOverlay, progressFill, progressText;
@@ -547,6 +549,10 @@ function updateInventory() {
 function cacheElements() {
     diagBox = document.getElementById('dialogue-box');
     diagText = document.getElementById('dialogue-text');
+    choiceOverlay = document.getElementById('choice-overlay');
+    choiceTextEl = document.getElementById('choice-text');
+    choiceYesBtn = document.getElementById('choice-yes');
+    choiceNoBtn = document.getElementById('choice-no');
     detectiveBGM = document.getElementById('detective-bgm');
     clickSfx = document.getElementById('click-sfx');
     lightSfx = document.getElementById('light-sfx');
@@ -559,6 +565,7 @@ function cacheElements() {
     pianoSfx = document.getElementById('piano-sfx');
     showerSfx = document.getElementById('shower-sfx');
     drawerCloseSfx = document.getElementById('drawer-close-sfx');
+    drillScrewSfx = document.getElementById('drill-screw-sfx');
     muteBtn = document.getElementById('mute-btn');
     hideBtn = document.getElementById('hide-btn');
     lightSwitch = document.getElementById('light-switch');
@@ -600,13 +607,18 @@ function initDialogueHandlers() {
         }
     }, true);
     // 全局点击（捕获阶段）：打字时任意点击立即完成剩余文字
-    document.addEventListener('click', completeTypingImmediately, true);
+    document.addEventListener('click', (event) => {
+        if (choiceOverlay && choiceOverlay.contains(event.target)) return;
+        completeTypingImmediately();
+    }, true);
     // 对话框显示时：任意点击继续对话，但阻止互动框点击（静音/隐藏除外）
     document.addEventListener('click', (event) => {
         if (!diagBox || diagBox.classList.contains('hidden')) return;
         const target = event.target;
         if (muteBtn && muteBtn.contains(target)) return;
         if (hideBtn && hideBtn.contains(target)) return;
+        if (choiceOverlay && choiceOverlay.contains(target)) return;
+        if (choiceOverlay && !choiceOverlay.classList.contains('hidden')) return;
         onDialogueBoxClick();
         event.preventDefault();
         event.stopPropagation();
@@ -626,7 +638,8 @@ function initAudio() {
         violinSfx,
         pianoSfx,
         showerSfx,
-        drawerCloseSfx
+        drawerCloseSfx,
+        drillScrewSfx
     };
 
     Object.keys(audioMap).forEach(key => {
@@ -660,6 +673,7 @@ function initAudio() {
             if (pianoSfx) pianoSfx.muted = isMuted;
             if (showerSfx) showerSfx.muted = isMuted;
             if (drawerCloseSfx) drawerCloseSfx.muted = isMuted;
+            if (drillScrewSfx) drillScrewSfx.muted = isMuted;
             muteBtn.textContent = isMuted ? '🔇' : '🔊';
         });
     }
@@ -746,6 +760,39 @@ function initUIControls() {
 
 }
 
+function initChoiceUI() {
+    const stopAll = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+    };
+    if (choiceYesBtn) {
+        choiceYesBtn.addEventListener('click', (event) => {
+            stopAll(event);
+            const handler = choiceHandlers && choiceHandlers.onYes;
+            hideChoiceOverlay();
+            if (typeof handler === 'function') handler();
+        });
+    }
+    if (choiceNoBtn) {
+        choiceNoBtn.addEventListener('click', (event) => {
+            stopAll(event);
+            const handler = choiceHandlers && choiceHandlers.onNo;
+            hideChoiceOverlay();
+            if (typeof handler === 'function') handler();
+        });
+    }
+    if (choiceOverlay) {
+        choiceOverlay.addEventListener('click', (event) => {
+            if (event.target === choiceOverlay) {
+                stopAll(event);
+                const handler = choiceHandlers && choiceHandlers.onNo;
+                hideChoiceOverlay();
+                if (typeof handler === 'function') handler();
+            }
+        });
+    }
+}
+
 function openImageOverlay(src, options = {}) {
     if (!src || !overlayImage || !imageOverlay) return;
     const { fadeIn = false } = options;
@@ -780,6 +827,21 @@ function closeDialogueBox() {
     gameState.isTyping = false;
 }
 
+function showChoiceOverlay(text, handlers = {}) {
+    if (!choiceOverlay || !choiceTextEl || !choiceYesBtn || !choiceNoBtn) return;
+    choiceTextEl.textContent = text || '';
+    choiceHandlers = handlers;
+    choiceOverlay.classList.remove('hidden');
+}
+
+function hideChoiceOverlay() {
+    if (choiceOverlay) choiceOverlay.classList.add('hidden');
+    choiceHandlers = null;
+    if (gameState && gameState.flags) {
+        gameState.flags.photoFrameAwaitingChoice = false;
+    }
+}
+
 // 关闭图片与对话框的统一入口，必要时播放抽屉关闭音效
 function playDrawerCloseIfNeeded() {
     if (gameState.flags.playDrawerCloseSfx) {
@@ -803,6 +865,7 @@ function playPhotoFrameBgSwapIfNeeded() {
 function closeOverlayAndDialogue() {
     closeImageOverlay();
     closeDialogueBox();
+    hideChoiceOverlay();
     playDrawerCloseIfNeeded();
     playPhotoFrameBgSwapIfNeeded();
 }
@@ -854,22 +917,52 @@ function queuePhotoFrameReveal() {
 
 function completePhotoFrameFlow() {
     const frameSrc = IMAGE_SOURCES['photo-frame'];
-    if (frameSrc) openImageOverlay(frameSrc, { fadeIn: true });
-
     const frameCfg = INTERACTIONS.find(i => i.id === 'photo-frame');
     const texts = frameCfg && Array.isArray(frameCfg.texts) ? frameCfg.texts : [];
     const thirdLine = texts[2] || FALLBACK_DIALOGUE;
-    if (thirdLine) gameState.dialogueQueue.push(thirdLine);
 
-    markKeyItemFound('photo-frame', { line: thirdLine, image: frameSrc });
+    const revealAfterAudio = () => {
+        if (frameSrc) openImageOverlay(frameSrc, { fadeIn: true });
+        if (thirdLine) showDialogue(thirdLine);
+        markKeyItemFound('photo-frame', { line: thirdLine, image: frameSrc });
 
-    gameState.flags.playPhotoFrameBgSwap = true;
-    gameState.flags.photoFramePendingReveal = false;
-    gameState.flags.photoFrameFinished = true;
-    gameState.flags.photoFrameReplayReady = true;
-    gameState.interactionIndex['tv-cabinet'] = Math.max(gameState.interactionIndex['tv-cabinet'] || 0, 1);
-    if (Array.isArray(texts) && texts.length > 0) {
-        gameState.interactionIndex['photo-frame'] = texts.length - 1;
+        gameState.flags.playPhotoFrameBgSwap = true;
+        gameState.flags.photoFramePendingReveal = false;
+        gameState.flags.photoFrameFinished = true;
+        gameState.flags.photoFrameReplayReady = true;
+        gameState.interactionIndex['tv-cabinet'] = Math.max(gameState.interactionIndex['tv-cabinet'] || 0, 1);
+        if (Array.isArray(texts) && texts.length > 0) {
+            gameState.interactionIndex['photo-frame'] = texts.length - 1;
+        }
+    };
+
+    const audio = drillScrewSfx;
+    if (audio) {
+        audio.currentTime = 0;
+        const cleanup = () => {
+            audio.onended = null;
+            audio.onerror = null;
+        };
+        audio.onended = () => {
+            cleanup();
+            revealAfterAudio();
+        };
+        audio.onerror = () => {
+            cleanup();
+            revealAfterAudio();
+        };
+        const played = audio.play();
+        if (played && typeof played.then === 'function') {
+            played.catch(() => {
+                cleanup();
+                revealAfterAudio();
+            });
+        } else {
+            // play() not available or failed silently
+            revealAfterAudio();
+        }
+    } else {
+        revealAfterAudio();
     }
 }
 
@@ -921,6 +1014,7 @@ function handleTvCabinetClick(texts) {
     // 3. 检查过相框后，显示第二句（找到螺丝刀）
     showDialogue(second);
     gameState.flags.tvCabinetFoundScrewdriver = true;
+    markKeyItemFound('screwdriver');
     return true;
 }
 
@@ -949,9 +1043,25 @@ function handlePhotoFrameClick(texts) {
         return true;
     }
 
-    // 找到螺丝刀后：从第二句开始，等待对话框点击时进入第三句并弹出图片
-    showDialogue(secondLine || FALLBACK_DIALOGUE);
-    queuePhotoFrameReveal();
+    // 正在等待玩家选择时，避免重复弹窗
+    if (gameState.flags.photoFrameAwaitingChoice) {
+        return true;
+    }
+
+    // 找到螺丝刀后：先弹出内建选择框，选择后再显示对应对话
+    gameState.flags.photoFrameAwaitingChoice = true;
+    showChoiceOverlay('是否使用“螺丝刀”？', {
+        onYes: () => {
+            gameState.flags.photoFrameAwaitingChoice = false;
+            showDialogue(secondLine || FALLBACK_DIALOGUE);
+            queuePhotoFrameReveal();
+        },
+        onNo: () => {
+            gameState.flags.photoFrameAwaitingChoice = false;
+            showDialogue('还是先不动它吧。');
+            gameState.flags.photoFramePendingReveal = false;
+        }
+    });
     return true;
 }
 
@@ -1079,6 +1189,7 @@ function startGame() {
     initDialogueHandlers();
     initAudio();
     initUIControls();
+    initChoiceUI();
     initInteractions();
     initDoorAudioForNavButtons();
     initIntroScene();
