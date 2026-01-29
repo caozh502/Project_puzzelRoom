@@ -944,7 +944,7 @@ function handleDrawerCabinetQueuedReveal(nextLine) {
     return true;
 }
 
-function handleFridgeDoorClick(texts) {
+function handleFridgeDoorClick(texts, choicePromptOverride) {
     playSfx(fridgeOpenSfx);
     const sojuImg = IMAGE_SOURCES['soju'];
     if (sojuImg) openImageOverlay(sojuImg, { fadeIn: true });
@@ -952,7 +952,7 @@ function handleFridgeDoorClick(texts) {
     const arr = Array.isArray(texts) ? texts : [];
     const baseLine = arr[0] || FALLBACK_DIALOGUE;
     const finalLine = arr[1] || FALLBACK_DIALOGUE;
-    const choicePrompt = arr[2] || FALLBACK_DIALOGUE;
+    const choicePrompt = choicePromptOverride || arr[2] || FALLBACK_DIALOGUE;
 
     const hasOpener = foundKeyItemIds.has('beer-opener');
     const hasSojuOpened = gameState.flags.sojuOpened;
@@ -1176,10 +1176,10 @@ function handleTvCabinetClick(texts) {
     return true;
 }
 
-function handlePhotoFrameClick(texts) {
+function handlePhotoFrameClick(texts, choicePromptOverride) {
     if (gameState.flags.photoFrameFinished) {
-        // 完成后停留在最后一句，复用重播逻辑
-        replayCurrentKeyItem();
+        // 完成后固定重播相框的末尾台词与图片
+        replayKeyItemById('photo-frame');
         return true;
     }
     const arr = Array.isArray(texts) ? texts : [];
@@ -1207,8 +1207,9 @@ function handlePhotoFrameClick(texts) {
     }
 
     // 找到螺丝刀后：先弹出内建选择框，选择后再显示对应对话
+    const choicePrompt = choicePromptOverride || '是否使用“螺丝刀”？';
     gameState.flags.photoFrameAwaitingChoice = true;
-    showChoiceOverlay('是否使用“螺丝刀”？', {
+    showChoiceOverlay(choicePrompt, {
         onYes: () => {
             gameState.flags.photoFrameAwaitingChoice = false;
             showDialogue(secondLine || FALLBACK_DIALOGUE);
@@ -1223,16 +1224,22 @@ function handlePhotoFrameClick(texts) {
     return true;
 }
 
-function replayCurrentKeyItem() {
-    const item = foundKeyItems[currentKeyItemIndex];
-    if (!item) return;
-    const { id, line: storedLine, image: storedImage } = item;
+function replayKeyItemById(id) {
+    if (!id) return;
+    const item = foundKeyItems.find(k => k.id === id);
+    const { line: storedLine, image: storedImage } = item || {};
     const fallbackInteraction = INTERACTIONS.find(i => i.id === id);
     const texts = fallbackInteraction && Array.isArray(fallbackInteraction.texts) ? fallbackInteraction.texts : [];
     const line = storedLine || (texts.length > 0 ? texts[texts.length - 1] : FALLBACK_DIALOGUE);
     const imageSrc = storedImage || IMAGE_SOURCES[id];
     if (imageSrc) openImageOverlay(imageSrc);
     if (line) showDialogue(line);
+}
+
+function replayCurrentKeyItem() {
+    const item = foundKeyItems[currentKeyItemIndex];
+    if (!item) return;
+    replayKeyItemById(item.id);
 }
 
 function initInteractions() {
@@ -1269,7 +1276,7 @@ function initInteractions() {
             }
 
             if (id === 'photo-frame') {
-                const handled = handlePhotoFrameClick(texts);
+                const handled = handlePhotoFrameClick(texts, interaction.choiceText);
                 if (handled) return;
             }
 
@@ -1278,7 +1285,7 @@ function initInteractions() {
             }
 
             if (id === 'fridge-door') {
-                const handled = handleFridgeDoorClick(texts);
+                const handled = handleFridgeDoorClick(texts, interaction.choiceText);
                 if (handled) return;
             }
             const play = sfxMap[id];

@@ -7,7 +7,7 @@
 .
 ├── index.html                 # 页面结构与资源挂载点
 ├── style.css                  # 全局样式与场景样式
-├── script.js                  # 游戏主逻辑（初始化、场景、交互、音效）
+├── script.js                  # 游戏主逻辑（初始化、场景、交互、音效、关键物品）
 ├── data/
 │   └── scenes.js              # 数据驱动配置（场景、交互、物品位置、音效、初始状态）
 └── assets/
@@ -28,23 +28,30 @@
 
 ### 3) data/scenes.js
 - 数据驱动配置：
-  - `startScene`：起始场景 ID。
-  - `initialState`：初始化进度状态。
-  - `audio`：音效参数（音量、是否循环、延迟等）。
-  - `scenes`：场景配置（背景、进场对白等）。
-  - `objectConfigs`：物品坐标与交互区域。
-  - `interactions`：交互文本配置。
+  - `startScene` / `introEndScene` / `initialState`
+  - `audio` / `audioSources`
+  - `imageSources` / `keyItems`
+  - `scenes`：背景与进场对白（含 `backgroundAfter` 用于渐变替换）
+  - `objectConfigs`：物品坐标与交互区域
+  - `interactions`：交互文本，支持：
+    - `texts`: 数组；`<auto>` 自动推进、`<stop>` 停止推进
+    - `choiceText`: 选择框提示（如相框螺丝刀、冰箱开瓶器）
 
 ### 4) script.js
-- 主逻辑入口：`window.onload` 触发初始化。
-- 主要职责：
-  - 资源缓存：`cacheElements()`
-  - 场景位置计算：`updatePositions()`
-  - 场景切换：`goToScene()`
-  - 对话系统：`showDialogue()` / `onDialogueBoxClick()`
-  - 音频系统：`initAudio()` / `playSfx()`
-  - 交互绑定：`initInteractions()`
-  - 开场逻辑：`initIntroScene()`
+- 主逻辑入口：`DOMContentLoaded` → 预加载资源 → `startGame()`。
+- 核心区域（已分段标注）：
+  - 配置/状态：常量、`gameState`、关键物品收集
+  - 工具：`playSfx`、`markKeyItemFound`、`transitionSceneBackground`、`swapHierarchy`
+  - 资源预加载：`collectImageUrls` / `collectAudioUrls` / `preloadAssets`
+  - 画面布局：`maintainAspectRatio`、`updatePositions`、`startWakeEffect`
+  - 对话系统：`showDialogue`、`completeTypingImmediately`、`onDialogueBoxClick`
+  - 场景导航：`goToScene`（含进场对白、淋浴音效开关）
+  - 物品栏与重播：`updateInventory`、`replayKeyItemById`、`replayCurrentKeyItem`
+  - 遮罩/选择框：`openImageOverlay`、`closeDialogueBox`、`showChoiceOverlay`
+  - 序列音效/收尾：抽屉/相框背景替换、冰箱关门、开瓶序列
+  - 特殊流程：梳妆台/抽屉耳环、电视柜/相框、冰箱/开瓶器、抽屉柜逻辑
+  - 交互绑定：`initInteractions`（处理 auto/stop、循环、choiceText）
+  - 初始化：元素缓存、位置、对话事件、音频、UI 控件、选择框、导航音效、开场场景
 
 ## 配置约定
 
@@ -70,12 +77,19 @@ scenes: {
 
 ### 交互文本（`interactions`）
 ```js
-{ id: 'wardrobe', text: '衣柜里放满了衣服，看起来很整洁。' }
+{ id: 'photo-frame', choiceText: '是否使用“螺丝刀”？', texts: ['...', '...', '...'] }
+// 支持 <auto>/<stop> 标记，choiceText 用于弹出选择框
 ```
 
 ### 音效配置（`audio`）
 - key 与 `<audio id="...">` 对应。
 - 支持字段：`volume`、`loop`、`autoplay`、`delayMs`（用于步行等延迟播放）。
+
+### 关键物品与重播
+- `keyItems` 由配置声明；发现时 `markKeyItemFound` 记录末尾台词与图片。
+- 重播：
+  - 物品栏点击：`replayCurrentKeyItem()` 重播当前选中物品。
+  - 指定物品：`replayKeyItemById(id)`，用于相框完成后的固定重播。
 
 ## 代码规范（建议）
 
