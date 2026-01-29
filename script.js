@@ -52,7 +52,7 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 音频变量
 let detectiveBGM, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
-let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx;
+let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx, findOpenerSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
 let fridgeNote, fridgeDoor;
@@ -573,6 +573,7 @@ function cacheElements() {
     fridgeCloseSfx = document.getElementById('fridge-close-sfx');
     openBottleSfx = document.getElementById('open-bottle-sfx');
     drinkSojuSfx = document.getElementById('drink-soju-sfx');
+    findOpenerSfx = document.getElementById('find-opener-sfx');
     muteBtn = document.getElementById('mute-btn');
     hideBtn = document.getElementById('hide-btn');
     lightSwitch = document.getElementById('light-switch');
@@ -652,7 +653,8 @@ function initAudio() {
         fridgeOpenSfx,
         fridgeCloseSfx,
         openBottleSfx,
-        drinkSojuSfx
+        drinkSojuSfx,
+        findOpenerSfx
     };
 
     Object.keys(audioMap).forEach(key => {
@@ -691,6 +693,7 @@ function initAudio() {
             if (fridgeCloseSfx) fridgeCloseSfx.muted = isMuted;
             if (openBottleSfx) openBottleSfx.muted = isMuted;
             if (drinkSojuSfx) drinkSojuSfx.muted = isMuted;
+            if (findOpenerSfx) findOpenerSfx.muted = isMuted;
             muteBtn.textContent = isMuted ? '🔇' : '🔊';
         });
     }
@@ -935,6 +938,7 @@ function handleDrawerCabinetQueuedReveal(nextLine) {
     const openerImg = IMAGE_SOURCES['beer-opener'];
     if (openerImg) openImageOverlay(openerImg, { fadeIn: true });
     markKeyItemFound('beer-opener', { line: nextLine, image: openerImg });
+    playSfx(findOpenerSfx);
     gameState.flags.drawerCabinetFinished = true;
     gameState.flags.drawerCabinetPendingOpenerLine = null;
     const lastIdx = typeof gameState.flags.drawerCabinetLastIndex === 'number'
