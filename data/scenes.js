@@ -8,7 +8,7 @@ window.GAME_CONFIG = {
         visitedScenes: {}
     },
     audio: {
-        bgm: { volume: 0.2, loop: true, autoplay: false },
+        detectiveBGM: { volume: 0.2, loop: true, autoplay: false },
         clickSfx: { volume: 0.1 },
         lightSfx: { volume: 0.6 },
         startDotSfx: { volume: 0.1, loop: false },
@@ -22,7 +22,7 @@ window.GAME_CONFIG = {
         deskCloseSfx: { volume: 0.5 }
     },
     audioSources: {
-        bgm: 'assets/Audio/MainMenu_BGM.mp3',
+        detectiveBGM: 'assets/Audio/loveDetective_BGM.mp3',
         clickSfx: 'assets/Audio/mouseClick_SFX.mp3',
         lightSfx: 'assets/Audio/lightOn_SFX.mp3',
         startDotSfx: 'assets/Audio/startDot_SFX.mp3',
@@ -69,8 +69,7 @@ window.GAME_CONFIG = {
                 position: 'center',
                 repeat: 'no-repeat'
             },
-            backgroundAfterDrawer: 'assets/Picture/livingroom.png',
-            backgroundAfterFrame: 'assets/Picture/livingroom.png'
+            backgroundAfter: 'assets/Picture/livingroom.png'
         },
         bedroom: {
             id: 'bedroom',
@@ -86,8 +85,7 @@ window.GAME_CONFIG = {
                 position: 'center',
                 repeat: 'no-repeat'
             },
-            backgroundAfterDrawer: 'assets/Picture/bedroom.png',
-            backgroundAfterFrame: 'assets/Picture/bedroom.png'
+            backgroundAfter: 'assets/Picture/bedroom.png',
         },
         hallway: {
             id: 'hallway',
@@ -184,7 +182,8 @@ window.GAME_CONFIG = {
             '确实有点口渴了，想喝点东西……'
         ] },
         { id: 'tv-cabinet', texts: [
-            '电视柜的抽屉里塞满了遥控器和说明书，啊哈，找到了一把螺丝刀！',
+            '电视柜的抽屉里塞满了遥控器和说明书。',
+            '电视柜的抽屉里塞满了不少东西，让我找找……啊哈，一把螺丝刀！',
             '电视柜上摆了不少东西，当时为了安装它，我们两个人花了一下午加一晚上的时间。'
         ]},
         { id: 'photo-frame', texts: [
