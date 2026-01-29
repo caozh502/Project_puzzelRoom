@@ -25,7 +25,7 @@ const FALLBACK_DIALOGUE = '请在scenes添加对话';
 const foundKeyItems = [];
 const foundKeyItemIds = new Set();
 
-const DIALOGUE_SPEED = 25;
+const DIALOGUE_SPEED = 40;
 // 调试开关：禁用醒来效果（眨眼+去模糊）
 const ENABLE_WAKE_EFFECT = false;
 // 调试开关：跳过 intro 场景
