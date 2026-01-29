@@ -19,7 +19,7 @@ window.GAME_CONFIG = {
         violinSfx: { volume: 0.3 },
         pianoSfx: { volume: 0.3 },
         showerSfx: { volume: 0.5, loop: true },
-        deskCloseSfx: { volume: 0.5 }
+        drawerCloseSfx: { volume: 0.5 }
     },
     audioSources: {
         detectiveBGM: 'assets/Audio/loveDetective_BGM.mp3',
@@ -33,7 +33,7 @@ window.GAME_CONFIG = {
         guitarSfx: 'assets/Audio/guitar_pizz_SFX.m4a',
         violinSfx: 'assets/Audio/violin_pizz_SFX.m4a',
         pianoSfx: 'assets/Audio/piano_SFX.mp3',
-        deskCloseSfx: 'assets/Audio/deskClose_SFX.mp3'
+        drawerCloseSfx: 'assets/Audio/drawerClose_SFX.mp3'
     },
     // 交互展示图片与其他独立图片的统一映射
     imageSources: {

@@ -51,7 +51,7 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 音频变量
 let detectiveBGM, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
-let guitarSfx, violinSfx, pianoSfx, showerSfx, deskCloseSfx;
+let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
 let inventoryTextEl, inventoryPrevBtn, inventoryNextBtn;
@@ -547,7 +547,7 @@ function updateInventory() {
 function cacheElements() {
     diagBox = document.getElementById('dialogue-box');
     diagText = document.getElementById('dialogue-text');
-    detectiveBGM = document.getElementById('detectiveBGM');
+    detectiveBGM = document.getElementById('detective-bgm');
     clickSfx = document.getElementById('click-sfx');
     lightSfx = document.getElementById('light-sfx');
     startDotSfx = document.getElementById('startdot-sfx');
@@ -558,7 +558,7 @@ function cacheElements() {
     violinSfx = document.getElementById('violin-sfx');
     pianoSfx = document.getElementById('piano-sfx');
     showerSfx = document.getElementById('shower-sfx');
-    deskCloseSfx = document.getElementById('desk-close-sfx');
+    drawerCloseSfx = document.getElementById('drawer-close-sfx');
     muteBtn = document.getElementById('mute-btn');
     hideBtn = document.getElementById('hide-btn');
     lightSwitch = document.getElementById('light-switch');
@@ -626,7 +626,7 @@ function initAudio() {
         violinSfx,
         pianoSfx,
         showerSfx,
-        deskCloseSfx
+        drawerCloseSfx
     };
 
     Object.keys(audioMap).forEach(key => {
@@ -659,7 +659,7 @@ function initAudio() {
             if (violinSfx) violinSfx.muted = isMuted;
             if (pianoSfx) pianoSfx.muted = isMuted;
             if (showerSfx) showerSfx.muted = isMuted;
-            if (deskCloseSfx) deskCloseSfx.muted = isMuted;
+            if (drawerCloseSfx) drawerCloseSfx.muted = isMuted;
             muteBtn.textContent = isMuted ? '🔇' : '🔊';
         });
     }
@@ -783,7 +783,7 @@ function closeDialogueBox() {
 // 关闭图片与对话框的统一入口，必要时播放抽屉关闭音效
 function playDrawerCloseIfNeeded() {
     if (gameState.flags.playDrawerCloseSfx) {
-        playSfx(deskCloseSfx);
+        playSfx(drawerCloseSfx);
         gameState.flags.playDrawerCloseSfx = false;
         const bedroomCfg = SCENE_CONFIGS['bedroom'];
         if (bedroomCfg && bedroomCfg.backgroundAfter) {
