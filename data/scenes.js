@@ -1,7 +1,7 @@
 // 数据驱动配置：场景、交互文本、物品位置
 window.GAME_CONFIG = {
     startScene: 'intro',
-    introEndScene: 'study',
+    introEndScene: 'bedroom',
     initialState: {
         inventory: [],
         flags: {},
