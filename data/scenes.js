@@ -24,7 +24,8 @@ window.GAME_CONFIG = {
         fridgeOpenSfx: { volume: 0.6 },
         fridgeCloseSfx: { volume: 0.6 },
         openBottleSfx: { volume: 0.6 },
-        drinkSojuSfx: { volume: 0.6 }
+        drinkSojuSfx: { volume: 0.6 },
+        findOpenerSfx: { volume: 0.3 }
     },
     audioSources: {
         detectiveBGM: 'assets/Audio/loveDetective_BGM.mp3',
@@ -43,7 +44,8 @@ window.GAME_CONFIG = {
         fridgeOpenSfx: 'assets/Audio/fridgeOpen_SFX.mp3',
         fridgeCloseSfx: 'assets/Audio/fridgeClose_SFX.mp3',
         openBottleSfx: 'assets/Audio/openBottle_SFX.mp3',
-        drinkSojuSfx: 'assets/Audio/drinkSoju.mp3'
+        drinkSojuSfx: 'assets/Audio/drinkSoju.mp3',
+        findOpenerSfx: 'assets/Audio/findOpener_SFX.mp3'
     },
     // 交互展示图片与其他独立图片的统一映射
     imageSources: {
@@ -184,8 +186,8 @@ window.GAME_CONFIG = {
             '印象最深的是暴风雪的关卡，我们在大风雪里相互搀扶着前行。'
         ] },
         { id: 'snack-box', texts: [
-            '零食盒里塞满了各种小零食，有薯片、海带结，还有我最喜欢的酸话梅。',
-            '每次晚上看剧的时候，都会偷偷拿出一点来吃，感觉特别治愈。',
+            '零食盒里塞满了各种小零食，有薯片、海带结，还有我最喜欢的麻酱素毛肚。',
+            '晚上看剧的时候，偷偷拿出一点来吃，感觉特别治愈。',
             '家里那位总是笑我吃得太多，说我会变成小胖子……'
         ] },
         { id: 'shark-plush', texts: [
@@ -242,7 +244,7 @@ window.GAME_CONFIG = {
         { id: 'drawer-cabinet', texts: [
             '抽屉柜是从一个二手卖家那里超低价买来的，但是质量还不错。',
             '印象里开瓶器好像是放在这里了，让我找找看',
-            '没错就是这个，我的猫爪爪开瓶器！哈哈，感谢万能的TB~',
+            '没错就是这个，我的猫爪爪开瓶器！好可爱呀，感谢万能的TB~',
             '抽屉柜是从一个二手卖家那里超低价买来的，但是质量还不错。'
         ]},
         { id: 'violin', texts: ['小提琴安静地靠在角落，漆面有轻微的磨损。'] },
