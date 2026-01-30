@@ -200,6 +200,17 @@ body {
     cursor: pointer;
 }
 
+.ui-controls-hidden #mute-btn,
+.ui-controls-hidden #hide-btn,
+.ui-controls-hidden #inventory-display {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ui-controls-fade-in {
+    animation: overlayFadeIn 0.8s ease-out forwards;
+}
+
 #tv-cabinet,
 #vanity-table {
     z-index: 12;

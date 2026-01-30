@@ -58,7 +58,7 @@ let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabine
 let fridgeNote, fridgeDoor;
 let choiceOverlay, choiceTextEl, choiceYesBtn, choiceNoBtn;
 let choiceHandlers = null;
-let inventoryTextEl, inventoryPrevBtn, inventoryNextBtn;
+let inventoryDisplay, inventoryTextEl, inventoryPrevBtn, inventoryNextBtn;
 // 加载覆盖层元素
 let loadingOverlay, progressFill, progressText;
 let isMuted = false;
@@ -435,6 +435,7 @@ function handleIntroComplete() {
         if (ENABLE_WAKE_EFFECT && container && overlay) {
             startWakeEffect(container, overlay);
         }
+        fadeInCoreUIControls();
     }, 2000);
 
     introPhase = false;
@@ -626,6 +627,7 @@ function cacheElements() {
     loadingOverlay = document.getElementById('loading-overlay');
     progressFill = document.getElementById('progress-fill');
     progressText = document.getElementById('progress-text');
+    inventoryDisplay = document.getElementById('inventory-display');
     inventoryTextEl = document.getElementById('inventory-text');
     inventoryPrevBtn = document.getElementById('inventory-prev');
     inventoryNextBtn = document.getElementById('inventory-next');
@@ -1131,6 +1133,23 @@ function closeOverlayAndDialogue() {
     playDrawerCloseIfNeeded();
     playPhotoFrameBgSwapIfNeeded();
     playFridgeCloseIfNeeded();
+    if (introPhase) {
+        handleIntroComplete();
+    }
+}
+
+// 在引导淡出后以淡入方式显示核心 UI 控件
+function fadeInCoreUIControls() {
+    const controls = [muteBtn, hideBtn, inventoryDisplay];
+    controls.forEach(el => {
+        if (el) el.classList.remove('ui-controls-fade-in');
+    });
+    document.body.classList.remove('ui-controls-hidden');
+    controls.forEach(el => {
+        if (!el) return;
+        void el.offsetWidth; // 重置动画
+        el.classList.add('ui-controls-fade-in');
+    });
 }
 
 function swapHierarchy(primaryEl, secondaryEl, swapped, options = {}) {
@@ -1498,6 +1517,7 @@ function initIntroScene() {
         } else if (overlay) {
             overlay.classList.add('hidden');
         }
+        fadeInCoreUIControls();
         return;
     }
 
@@ -1521,6 +1541,7 @@ function initIntroScene() {
 
 // --- 启动流程：预加载 -> 启动游戏 ---
 function startGame() {
+    document.body.classList.add('ui-controls-hidden');
     applyInitialState();
     initPositions();
     initDialogueHandlers();
