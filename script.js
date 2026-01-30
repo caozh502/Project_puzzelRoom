@@ -52,7 +52,7 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot;
 // 音频变量
 let detectiveBGM, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
-let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx, findOpenerSfx;
+let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx, findOpenerSfx, clothRemoveSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
 let fridgeNote, fridgeDoor;
@@ -440,6 +440,38 @@ function handleIntroComplete() {
     introPhase = false;
 }
 
+function completeElectricPianoClothFlow() {
+    if (!gameState.flags.electricPianoAwaitingChoice || gameState.flags.electricPianoClothLifted) return false;
+    gameState.flags.electricPianoAwaitingChoice = false;
+    const prompt = gameState.flags.electricPianoChoicePrompt || '是否掀开钢琴布？';
+    closeDialogueBox();
+    showChoiceOverlay(prompt, {
+        onYes: () => {
+            playSfx(clothRemoveSfx);
+            const studyCfg = SCENE_CONFIGS['study'];
+            const bgAfter = studyCfg && studyCfg.backgroundAfter;
+            if (bgAfter) {
+                transitionSceneBackground('study', bgAfter, 1200);
+            }
+            gameState.flags.electricPianoClothLifted = true;
+            gameState.flags.electricPianoChoicePrompt = null;
+        },
+        onNo: () => {
+            gameState.flags.electricPianoChoicePrompt = null;
+        }
+    });
+    return true;
+}
+
+function revealElectricPianoKey(line) {
+    if (gameState.flags.electricPianoKeyRevealed) return;
+    const keySrc = IMAGE_SOURCES['electric-piano'];
+    if (keySrc) openImageOverlay(keySrc, { fadeIn: true });
+    markKeyItemFound('electric-piano', { line: line || FALLBACK_DIALOGUE, image: keySrc });
+    gameState.flags.electricPianoKeyRevealed = true;
+    gameState.flags.electricPianoPendingKeyLine = null;
+}
+
 function onDialogueBoxClick() {
     if (!diagBox || !diagText) return;
 
@@ -473,10 +505,13 @@ function onDialogueBoxClick() {
         gameState.justCompleted = false;
         return;
     }
+    // 电钢琴：完成首句后弹出是否掀布选择
+    if (completeElectricPianoClothFlow()) return;
     // 若存在后续队列，则显示下一条对话
     if (gameState.dialogueQueue.length > 0) {
         const next = gameState.dialogueQueue.shift();
         handleDrawerCabinetQueuedReveal(next);
+        handleElectricPianoQueuedReveal(next);
         showDialogue(next);
         return;
     }
@@ -566,6 +601,7 @@ function cacheElements() {
     guitarSfx = document.getElementById('guitar-sfx');
     violinSfx = document.getElementById('violin-sfx');
     pianoSfx = document.getElementById('piano-sfx');
+    clothRemoveSfx = document.getElementById('cloth-remove-sfx');
     showerSfx = document.getElementById('shower-sfx');
     drawerCloseSfx = document.getElementById('drawer-close-sfx');
     drillScrewSfx = document.getElementById('drill-screw-sfx');
@@ -647,6 +683,7 @@ function initAudio() {
         guitarSfx,
         violinSfx,
         pianoSfx,
+        clothRemoveSfx,
         showerSfx,
         drawerCloseSfx,
         drillScrewSfx,
@@ -686,6 +723,7 @@ function initAudio() {
             if (guitarSfx) guitarSfx.muted = isMuted;
             if (violinSfx) violinSfx.muted = isMuted;
             if (pianoSfx) pianoSfx.muted = isMuted;
+            if (clothRemoveSfx) clothRemoveSfx.muted = isMuted;
             if (showerSfx) showerSfx.muted = isMuted;
             if (drawerCloseSfx) drawerCloseSfx.muted = isMuted;
             if (drillScrewSfx) drillScrewSfx.muted = isMuted;
@@ -945,6 +983,100 @@ function handleDrawerCabinetQueuedReveal(nextLine) {
         ? gameState.flags.drawerCabinetLastIndex
         : 3;
     gameState.interactionIndex['drawer-cabinet'] = lastIdx;
+    return true;
+}
+
+function handleElectricPianoQueuedReveal(nextLine) {
+    if (!gameState.flags.electricPianoPendingKeyLine) return false;
+    if (nextLine !== gameState.flags.electricPianoPendingKeyLine) return false;
+    revealElectricPianoKey(nextLine);
+    return true;
+}
+
+function handleElectricPianoClick(interaction) {
+    const texts = Array.isArray(interaction && interaction.texts) ? interaction.texts : [];
+    const loop = interaction && interaction.loop;
+    const id = 'electric-piano';
+    const sanitize = (t) => (typeof t === 'string'
+        ? t.replace(AUTO_ADVANCE_TAG, '').replace(STOP_ADVANCE_TAG, '').trim()
+        : t);
+
+    // 掀布后才播放琴声
+    if (gameState.flags.electricPianoClothLifted) {
+        playSfx(pianoSfx);
+    }
+
+    // 已揭示后：直接重播末句与图片
+    if (gameState.flags.electricPianoKeyRevealed) {
+        const finalLine = sanitize(texts[texts.length - 1]) || FALLBACK_DIALOGUE;
+        const keySrc = IMAGE_SOURCES[id];
+        if (keySrc) openImageOverlay(keySrc);
+        showDialogue(finalLine);
+        if (texts.length > 0) {
+            gameState.interactionIndex[id] = texts.length - 1;
+        }
+        return true;
+    }
+
+    if (texts.length === 0) {
+        showDialogue(FALLBACK_DIALOGUE);
+        return true;
+    }
+
+    const idx = gameState.interactionIndex[id] || 0;
+    const effectiveIdx = Math.min(idx, texts.length - 1);
+    const rawText = texts[effectiveIdx];
+    const hasAuto = typeof rawText === 'string' && rawText.includes(AUTO_ADVANCE_TAG);
+    const hasStop = typeof rawText === 'string' && rawText.includes(STOP_ADVANCE_TAG);
+    const toShow = sanitize(rawText);
+    const sanitizedLastLine = sanitize(texts[texts.length - 1] || '');
+
+    if (hasAuto) {
+        const rest = [];
+        let stopIdx = null;
+        for (let offset = 1; effectiveIdx + offset < texts.length; offset++) {
+            const cand = texts[effectiveIdx + offset];
+            const candHasStop = typeof cand === 'string' && cand.includes(STOP_ADVANCE_TAG);
+            const cleaned = sanitize(cand);
+            if (cleaned) rest.push(cleaned);
+            if (candHasStop) {
+                stopIdx = effectiveIdx + offset;
+                break;
+            }
+        }
+        if (gameState.flags.electricPianoClothLifted
+            && !gameState.flags.electricPianoKeyRevealed
+            && rest.length > 0) {
+            gameState.flags.electricPianoPendingKeyLine = rest[rest.length - 1];
+        }
+        if (rest.length > 0) {
+            gameState.dialogueQueue.push(...rest);
+        }
+        if (loop) {
+            gameState.interactionIndex[id] = (effectiveIdx + 1) % texts.length;
+        } else if (stopIdx !== null) {
+            gameState.interactionIndex[id] = stopIdx;
+        } else {
+            gameState.interactionIndex[id] = texts.length - 1;
+        }
+    } else {
+        const next = effectiveIdx + 1;
+        gameState.interactionIndex[id] = loop
+            ? ((next) % texts.length)
+            : Math.min(next, texts.length - 1);
+    }
+
+    if (!gameState.flags.electricPianoClothLifted) {
+        gameState.flags.electricPianoAwaitingChoice = true;
+        gameState.flags.electricPianoChoicePrompt = interaction.choiceText || '是否掀开钢琴布？';
+    }
+
+    if (gameState.flags.electricPianoClothLifted
+        && !gameState.flags.electricPianoKeyRevealed
+        && toShow === sanitizedLastLine) {
+        revealElectricPianoKey(toShow);
+    }
+    showDialogue(toShow);
     return true;
 }
 
@@ -1249,8 +1381,7 @@ function replayCurrentKeyItem() {
 function initInteractions() {
     const sfxMap = {
         guitar: () => playSfx(guitarSfx),
-        violin: () => playSfx(violinSfx),
-        'electric-piano': () => playSfx(pianoSfx)
+        violin: () => playSfx(violinSfx)
     };
     INTERACTIONS.forEach((interaction) => {
         const { id, texts, loop } = interaction;
@@ -1281,6 +1412,11 @@ function initInteractions() {
 
             if (id === 'photo-frame') {
                 const handled = handlePhotoFrameClick(texts, interaction.choiceText);
+                if (handled) return;
+            }
+
+            if (id === 'electric-piano') {
+                const handled = handleElectricPianoClick(interaction);
                 if (handled) return;
             }
 
@@ -1344,15 +1480,8 @@ function initInteractions() {
             const discoveredLine = Array.isArray(texts) && texts.length > 0
                 ? texts[texts.length - 1]
                 : undefined;
-            // 冰箱字条：点击后加入关键物品，使用最后一句（口渴台词）
-            if (id === 'fridge-note') {
-                markKeyItemFound(id, {
-                    line: '确实有点口渴了，想喝点东西……想起来冰箱里有葡萄味烧酒。',
-                    image: imageSrc
-                });
-            } else {
-                markKeyItemFound(id, { line: discoveredLine, image: imageSrc });
-            }
+            markKeyItemFound(id, { line: discoveredLine, image: imageSrc });
+
         });
     });
 }

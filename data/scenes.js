@@ -18,6 +18,7 @@ window.GAME_CONFIG = {
         guitarSfx: { volume: 0.3 },
         violinSfx: { volume: 0.3 },
         pianoSfx: { volume: 0.3 },
+        clothRemoveSfx: { volume: 0.6 },
         showerSfx: { volume: 0.5, loop: true },
         drawerCloseSfx: { volume: 0.5 },
         drillScrewSfx: { volume: 0.5 },
@@ -39,6 +40,7 @@ window.GAME_CONFIG = {
         guitarSfx: 'assets/Audio/guitar_pizz_SFX.m4a',
         violinSfx: 'assets/Audio/violin_pizz_SFX.m4a',
         pianoSfx: 'assets/Audio/piano_SFX.mp3',
+        clothRemoveSfx: 'assets/Audio/clothRemove_SFX.mp3',
         drawerCloseSfx: 'assets/Audio/drawerClose_SFX.mp3',
         drillScrewSfx: 'assets/Audio/drillScrew_SFX.mp3',
         fridgeOpenSfx: 'assets/Audio/fridgeOpen_SFX.mp3',
@@ -58,6 +60,7 @@ window.GAME_CONFIG = {
         'gift': 'assets/Picture/gift.png',
         'earrings': 'assets/Picture/earrings.png',
         'photo-frame': 'assets/Picture/instax.png',
+        'electric-piano': 'assets/Picture/piano_key.png',
         'soju': 'assets/Picture/soju.png',
         'beer-opener': 'assets/Picture/bottle_opener.png'
     },
@@ -249,7 +252,11 @@ window.GAME_CONFIG = {
         ]},
         { id: 'violin', texts: ['小提琴安静地靠在角落，漆面有轻微的磨损。'] },
         { id: 'guitar', texts: ['吉他的音好像不太准，看来有一阵子没练习了。']},
-        { id: 'electric-piano', texts: ['Donner电钢琴，当时花了不少钱咬牙买下的，谁叫木头的纹理让人心痒痒呢。'] },
+        { id: 'electric-piano', choiceText: '是否掀开钢琴布？', texts: [
+            '钢琴盖上盖着一块布，防尘又防划痕。好久没有练习了呢……',
+            'Donner的电钢琴，当时咬咬牙买的，谁叫它三角形的大长腿那么好看呢~<auto>',
+            '咦？G音的琴键上怎么贴着个布条？'
+        ] },
         { id: 'bookcase', texts: ['书柜里塞了一些乐谱和书：《亚当，你是谁》，《魔戒》，《卡尔弗赖什音阶练习》……'] },
         { id: 'storage-box', texts: ['杂物盒里堆着一些圣诞树的装饰品。'] },
         { id: 'startrail-photo', texts: ['那一晚的星空很美，两个人一起静静地等待着照片的出炉，有一搭没一搭地聊着天。'] },
