@@ -202,8 +202,9 @@ function handleLivingroomFinalDialogue() {
     const active = document.querySelector('.scene.active');
     const isLivingroomActive = active && active.id === 'scene-livingroom';
     if (gameState.flags.livingroomFinalApplied && !gameState.flags.livingroomFinalDialogueShown && isLivingroomActive) {
-        gameState.isTyping = true;
-        showDialogue(LIVINGROOM_FINAL_LINE);
+        setTimeout(() => {
+            showDialogue(LIVINGROOM_FINAL_LINE);
+        }, 0);
         gameState.flags.livingroomFinalDialogueShown = true;
     }
 }
@@ -865,6 +866,7 @@ function initDialogueHandlers() {
     // 全局点击（捕获阶段）：打字时任意点击立即完成剩余文字
     document.addEventListener('click', (event) => {
         if (choiceOverlay && choiceOverlay.contains(event.target)) return;
+        if (gameState.flags.livingroomFinalApplied) return;
         completeTypingImmediately();
     }, true);
     // 对话框显示时：任意点击继续对话，但阻止互动框点击（静音/隐藏除外）
@@ -1234,10 +1236,6 @@ function closeDialogueBox() {
     if (!diagBox) return;
     diagBox.classList.add('hidden');
     diagBox.classList.remove('show-next');
-    if (gameState.flags.livingroomFinalApplied && !gameState.flags.livingroomFinalDialogueShown) {
-        handleLivingroomFinalDialogue();
-        return;
-    }
     gameState.dialogueQueue = [];
     gameState.justCompleted = false;
     if (typingTimer) {
@@ -1507,6 +1505,7 @@ function closeOverlayAndDialogue() {
     playDrawerCloseIfNeeded();
     playPhotoFrameBgSwapIfNeeded();
     playFridgeCloseIfNeeded();
+    handleLivingroomFinalDialogue();
     if (introPhase) {
         handleIntroComplete();
     }
