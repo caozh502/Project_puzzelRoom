@@ -29,9 +29,9 @@ const foundKeyItemIds = new Set();
 
 const DIALOGUE_SPEED = 40;
 // 调试开关：禁用醒来效果（眨眼+去模糊）
-const ENABLE_WAKE_EFFECT = false;
+const ENABLE_WAKE_EFFECT = true;
 // 调试开关：跳过 intro 场景
-const ENABLE_INTRO_SCENE = false;
+const ENABLE_INTRO_SCENE = true;
 
 const gameState = {
     inventory: [],
@@ -100,6 +100,16 @@ function setGiftBlur(step) {
     const idx = Math.min(Math.max(step, 0), GIFT_BLUR_LEVELS.length - 1);
     overlayImage.style.transition = overlayImage.style.transition || 'filter 0.8s ease';
     overlayImage.style.filter = `blur(${GIFT_BLUR_LEVELS[idx]}px)`;
+}
+
+function advanceGiftBlurState() {
+    if (!gameState.flags.giftBlurActive) return;
+    const nextStep = Math.min((gameState.flags.giftBlurStep || 0) + 1, GIFT_BLUR_LEVELS.length - 1);
+    gameState.flags.giftBlurStep = nextStep;
+    setGiftBlur(nextStep);
+    if (nextStep === GIFT_BLUR_LEVELS.length - 1 && gameState.dialogueQueue.length === 0) {
+        gameState.flags.giftBlurActive = false;
+    }
 }
 
 function updateGiftBoxState() {
@@ -683,14 +693,7 @@ function onDialogueBoxClick() {
     // 若存在后续队列，则显示下一条对话
     if (gameState.dialogueQueue.length > 0) {
         const next = gameState.dialogueQueue.shift();
-        if (gameState.flags.giftBlurActive) {
-            const nextStep = Math.min((gameState.flags.giftBlurStep || 0) + 1, GIFT_BLUR_LEVELS.length - 1);
-            gameState.flags.giftBlurStep = nextStep;
-            setGiftBlur(nextStep);
-            if (nextStep === GIFT_BLUR_LEVELS.length - 1 && gameState.dialogueQueue.length === 0) {
-                gameState.flags.giftBlurActive = false;
-            }
-        }
+        advanceGiftBlurState();
         handleDrawerCabinetQueuedReveal(next);
         handleElectricPianoQueuedReveal(next);
         showDialogue(next);
@@ -973,6 +976,13 @@ function initDoorAudioForNavButtons() {
 function setupIntroRippleStates() {
     if (!introRippleLoader) return;
 
+    introRippleLoader.style.animation = '';
+    introRippleLoader.style.opacity = '';
+    if (startDot) {
+        startDot.style.animation = '';
+        startDot.style.opacity = '';
+    }
+
     const applyState = (options = {}) => {
         const {
             duration = '7s',
@@ -1001,7 +1011,7 @@ function handleStartDotClick() {
 
     // 点击后切换到 5 圈、2s、0.5s
     introRippleLoader.style.setProperty('--ripple-duration', '1.5s');
-    introRippleLoader.style.setProperty('--ripple-delay-step', '0.5s');
+    introRippleLoader.style.setProperty('--ripple-delay-step', '0.8s');
     introRippleLoader.classList.remove('count-1', 'count-2', 'count-3', 'count-4');
 
     // 改为监听最后一个圈的动画循环，避免受前几圈延迟影响
@@ -1013,10 +1023,14 @@ function handleStartDotClick() {
         introRippleCycles = 0;
         const onIter = () => {
             introRippleCycles += 1;
-            if (introRippleCycles >= 6 && !introGiftShown) {
+            if (introRippleCycles >= 5 && !introGiftShown) {
                 introGiftShown = true;
                 lastRing.removeEventListener('animationiteration', onIter);
                 lastRing._introOnIter = null;
+                introRippleLoader.style.animation = 'overlayFadeOut 1.5s forwards';
+                if (startDot) {
+                    startDot.style.animation = 'overlayFadeOut 1.5s forwards';
+                }
                 revealIntroGift();
             }
         };
@@ -1058,6 +1072,7 @@ function revealIntroGift() {
 function fadeOutIntroGift() {
     if (!introPhase || gameState.flags.giftFadeOutStarted) return false;
     gameState.flags.giftFadeOutStarted = true;
+    if (startDot) startDot.remove();
     const overlay = imageOverlay;
     const dialogue = diagBox;
 
