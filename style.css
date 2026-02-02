@@ -198,6 +198,7 @@ body {
     padding: 6px 10px;
     border-radius: 6px;
     cursor: pointer;
+    width: 150px; /* 固定宽度，避免文字长短影响左右按钮位置 */
 }
 
 .ui-controls-hidden #mute-btn,
@@ -244,11 +245,22 @@ body {
     padding: 4px 8px;
     border-radius: 4px;
     font-size: 12px;
+    flex: 0 0 32px;
+    text-align: justify;
 }
 
 .inventory-nav:disabled {
     opacity: 0.4;
     cursor: not-allowed;
+}
+
+#inventory-text {
+    flex: 1;
+    min-width: 0;
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 #mute-btn {
