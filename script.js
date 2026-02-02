@@ -9,6 +9,7 @@ const AUDIO_SOURCES = CONFIG.audioSources || {};
 const INITIAL_STATE = CONFIG.initialState || {};
 const INTRO_END_SCENE = CONFIG.introEndScene || 'bedroom';
 const KEY_ITEMS = CONFIG.keyItems || [];
+const LIVINGROOM_CONFIG = SCENE_CONFIGS['livingroom'] || {};
 let currentKeyItemIndex = 0;
 
 // 对话标签：在文本中加入此标记，可在单次触发后通过对话框点击继续播放后续行
@@ -28,9 +29,9 @@ const foundKeyItemIds = new Set();
 
 const DIALOGUE_SPEED = 40;
 // 调试开关：禁用醒来效果（眨眼+去模糊）
-const ENABLE_WAKE_EFFECT = true;
+const ENABLE_WAKE_EFFECT = false;
 // 调试开关：跳过 intro 场景
-const ENABLE_INTRO_SCENE = true;
+const ENABLE_INTRO_SCENE = false;
 
 const gameState = {
     inventory: [],
@@ -52,7 +53,7 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot, introRippleLoader;
 // 音频变量
 let detectiveBGM, clickSfx, clickDotSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
-let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx, findOpenerSfx, clothRemoveSfx;
+let guitarSfx, violinSfx, pianoSfx, showerSfx, birdsChirpingSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx, findOpenerSfx, clothRemoveSfx, finalBgm;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
 let fridgeNote, fridgeDoor;
@@ -67,13 +68,9 @@ let isMuted = false;
 let interactivesHidden = false;
 let diagBox, diagText;
 const GIFT_BLUR_LEVELS = [12, 9, 6, 3, 0];
-const DEFAULT_GIFT_LINES = [
-    "等了你好久了，这是开启未来的钥匙……",
-    "它来自未知的旅程，也等待你的触碰。",
-    "拨开迷雾，你会看清它的模样。",
-    "握紧它，前路将被点亮。",
-    "现在，准备好了就出发吧。"
-];
+const GIFT_CODE_PROMPT = LIVINGROOM_CONFIG.giftCodePrompt;
+const GIFT_CODE_ANSWER = LIVINGROOM_CONFIG.giftCodeAnswer;
+const LIVINGROOM_FINAL_LINE = LIVINGROOM_CONFIG.finalLine;
 
 // --- 工具方法 ---
 function playSfx(audio) {
@@ -82,11 +79,150 @@ function playSfx(audio) {
     audio.play();
 }
 
+function ensureDetectiveBgm() {
+    if (!detectiveBGM) return;
+    if (!gameState.flags.detectiveBgmStarted) {
+        gameState.flags.detectiveBgmStarted = true;
+        detectiveBGM.loop = true;
+        try { detectiveBGM.play(); } catch (_) {}
+    } else if (detectiveBGM.paused && !isMuted) {
+        try { detectiveBGM.play(); } catch (_) {}
+    }
+}
+
+function stopDetectiveBgm() {
+    if (!detectiveBGM) return;
+    detectiveBGM.pause();
+}
+
 function setGiftBlur(step) {
     if (!overlayImage) return;
     const idx = Math.min(Math.max(step, 0), GIFT_BLUR_LEVELS.length - 1);
     overlayImage.style.transition = overlayImage.style.transition || 'filter 0.8s ease';
     overlayImage.style.filter = `blur(${GIFT_BLUR_LEVELS[idx]}px)`;
+}
+
+function updateGiftBoxState() {
+    if (!giftBox) return;
+    const isFinal = !!gameState.flags.livingroomFinalApplied;
+    giftBox.style.zIndex = isFinal ? '13' : '0';
+    giftBox.style.pointerEvents = isFinal ? 'auto' : 'none';
+    if (isFinal) {
+        giftBox.removeAttribute('aria-disabled');
+    } else {
+        giftBox.setAttribute('aria-disabled', 'true');
+    }
+}
+
+function playFinalBgm() {
+    if (!finalBgm) return;
+    stopDetectiveBgm();
+    finalBgm.currentTime = 0;
+    try { finalBgm.play(); } catch (_) {}
+}
+
+function showGiftCodePrompt() {
+    if (gameState.flags.giftCodePromptOpen) return;
+    gameState.flags.giftCodePromptOpen = true;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'code-input-overlay';
+
+    const box = document.createElement('div');
+    box.className = 'choice-box code-input-box';
+
+    const label = document.createElement('div');
+    label.className = 'code-input-label';
+    label.textContent = GIFT_CODE_PROMPT;
+
+    const input = document.createElement('input');
+    input.type = 'text';
+    input.className = 'code-input-field';
+    input.autocomplete = 'off';
+    input.maxLength = 8;
+
+    const actions = document.createElement('div');
+    actions.className = 'choice-actions';
+
+    const okBtn = document.createElement('button');
+    okBtn.textContent = '确认';
+    const cancelBtn = document.createElement('button');
+    cancelBtn.textContent = '取消';
+
+    actions.appendChild(okBtn);
+    actions.appendChild(cancelBtn);
+    box.appendChild(label);
+    box.appendChild(input);
+    box.appendChild(actions);
+    overlay.appendChild(box);
+    document.body.appendChild(overlay);
+
+    const closePrompt = () => {
+        overlay.remove();
+        gameState.flags.giftCodePromptOpen = false;
+    };
+
+    const handleOk = () => {
+        const val = (input.value || '').trim();
+        if (val === GIFT_CODE_ANSWER) {
+            gameState.flags.giftCodeSolved = true;
+            closePrompt();
+            showDialogue('通关成功');
+            playFinalBgm();
+        } else {
+            input.value = '';
+            input.focus();
+        }
+    };
+
+    okBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); handleOk(); });
+    cancelBtn.addEventListener('click', (e) => { e.preventDefault(); e.stopPropagation(); closePrompt(); });
+    overlay.addEventListener('click', (e) => {
+        if (e.target === overlay) {
+            e.preventDefault();
+            e.stopPropagation();
+            closePrompt();
+        }
+    });
+    input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            handleOk();
+        }
+        if (e.key === 'Escape') {
+            e.preventDefault();
+            closePrompt();
+        }
+    });
+
+    setTimeout(() => input.focus(), 0);
+}
+
+function checkLivingroomFinalBackground() {
+    const livingCfg = SCENE_CONFIGS['livingroom'];
+    if (!livingCfg || !livingCfg.backgroundFinal) return;
+    if (gameState.flags.livingroomFinalApplied) return;
+
+    const allItemsFound = foundKeyItems.length >= KEY_ITEMS.length;
+    const sojuOpened = !!gameState.flags.sojuOpened;
+    const photoFrameFixed = !!gameState.flags.photoFrameFinished;
+    if (!(allItemsFound && sojuOpened && photoFrameFixed)) return;
+
+    gameState.flags.livingroomFinalApplied = true;
+    livingCfg.background.value = livingCfg.backgroundFinal;
+
+    const active = document.querySelector('.scene.active');
+    const isLivingroomActive = active && active.id === 'scene-livingroom';
+    if (isLivingroomActive) {
+        transitionSceneBackground('livingroom', livingCfg.backgroundFinal, 1200);
+    }
+
+    updateGiftBoxState();
+
+    if (gameState.flags.livingroomFinalApplied && !gameState.flags.livingroomFinalDialogueShown && isLivingroomActive) {
+        showDialogue(LIVINGROOM_FINAL_LINE);
+        gameState.flags.livingroomFinalDialogueShown = true;
+    }
 }
 
 function applyInitialState() {
@@ -125,6 +261,7 @@ function markKeyItemFound(id, payload = {}) {
     foundKeyItems.push({ id, name: item.name || id, line, image });
     currentKeyItemIndex = Math.max(foundKeyItems.length - 1, 0);
     updateInventory();
+    checkLivingroomFinalBackground();
 }
 
 function applySceneBackground(sceneId, target) {
@@ -462,6 +599,14 @@ function handleIntroComplete() {
     introPhase = false;
 }
 
+function handleLivingroomEntryExtras() {
+    updateGiftBoxState();
+    if (gameState.flags.livingroomFinalApplied && !gameState.flags.livingroomFinalDialogueShown) {
+        showDialogue(LIVINGROOM_FINAL_LINE);
+        gameState.flags.livingroomFinalDialogueShown = true;
+    }
+}
+
 function completeElectricPianoClothFlow() {
     if (!gameState.flags.electricPianoAwaitingChoice || gameState.flags.electricPianoClothLifted) return false;
     gameState.flags.electricPianoAwaitingChoice = false;
@@ -571,10 +716,24 @@ function goToScene(sceneId) {
         if (showerSfx) {
             playSfx(showerSfx)
         }
+        // 首次进入走廊时启动 BGM，之后持续循环
+        ensureDetectiveBgm();
     } else {
         if (showerSfx) {
             showerSfx.pause();
             showerSfx.currentTime = 0; 
+        }
+    }
+
+    // 卧室环境音：鸟叫声循环播放
+    if (sceneId === 'bedroom') {
+        if (birdsChirpingSfx) {
+            playSfx(birdsChirpingSfx);
+        }
+    } else {
+        if (birdsChirpingSfx) {
+            birdsChirpingSfx.pause();
+            birdsChirpingSfx.currentTime = 0;
         }
     }
 
@@ -598,6 +757,10 @@ function goToScene(sceneId) {
 
     if (sceneId) {
         gameState.visitedScenes[sceneId] = true;
+    }
+
+    if (sceneId === 'livingroom') {
+        handleLivingroomEntryExtras();
     }
 
     // 更新物品位置和调试信息
@@ -637,8 +800,10 @@ function cacheElements() {
     guitarSfx = document.getElementById('guitar-sfx');
     violinSfx = document.getElementById('violin-sfx');
     pianoSfx = document.getElementById('piano-sfx');
+    birdsChirpingSfx = document.getElementById('birds-chirping-sfx');
     clothRemoveSfx = document.getElementById('cloth-remove-sfx');
     showerSfx = document.getElementById('shower-sfx');
+    finalBgm = document.getElementById('final-bgm');
     drawerCloseSfx = document.getElementById('drawer-close-sfx');
     drillScrewSfx = document.getElementById('drill-screw-sfx');
     fridgeOpenSfx = document.getElementById('fridge-open-sfx');
@@ -724,6 +889,7 @@ function initAudio() {
         guitarSfx,
         violinSfx,
         pianoSfx,
+        birdsChirpingSfx,
         clothRemoveSfx,
         showerSfx,
         drawerCloseSfx,
@@ -732,7 +898,8 @@ function initAudio() {
         fridgeCloseSfx,
         openBottleSfx,
         drinkSojuSfx,
-        findOpenerSfx
+        findOpenerSfx,
+        finalBgm
     };
 
     Object.keys(audioMap).forEach(key => {
@@ -774,6 +941,8 @@ function initAudio() {
             if (openBottleSfx) openBottleSfx.muted = isMuted;
             if (drinkSojuSfx) drinkSojuSfx.muted = isMuted;
             if (findOpenerSfx) findOpenerSfx.muted = isMuted;
+            if (finalBgm) finalBgm.muted = isMuted;
+            if (birdsChirpingSfx) birdsChirpingSfx.muted = isMuted;
             muteBtn.textContent = isMuted ? '🔇' : '🔊';
         });
     }
@@ -855,9 +1024,7 @@ function revealIntroGift() {
     if (startDotSfx) { startDotSfx.pause(); startDotSfx.currentTime = 0; }
     const giftSrc = IMAGE_SOURCES['gift'];
     const introCfg = SCENE_CONFIGS['intro'] || {};
-    const giftLines = Array.isArray(introCfg.giftLines) && introCfg.giftLines.length > 0
-        ? introCfg.giftLines
-        : DEFAULT_GIFT_LINES;
+    const giftLines = Array.isArray(introCfg.giftLines) ? introCfg.giftLines : [];
 
     gameState.flags.giftSequenceActive = true;
     gameState.flags.giftFadeOutStarted = false;
@@ -956,8 +1123,12 @@ function initUIControls() {
 
     if (giftBox) {
         giftBox.addEventListener('click', () => {
-            const src = IMAGE_SOURCES['gift'];
-            if (src) openImageOverlay(src);
+            if (!gameState.flags.livingroomFinalApplied) return;
+            if (gameState.flags.giftCodeSolved) {
+                showDialogue('已经通关成功！');
+                return;
+            }
+            showGiftCodePrompt();
         });
     }
 
@@ -1058,7 +1229,10 @@ function closeDialogueBox() {
     if (!diagBox) return;
     diagBox.classList.add('hidden');
     diagBox.classList.remove('show-next');
-    gameState.dialogueQueue = [];
+    const keepQueue = gameState.flags.livingroomFinalApplied && !gameState.flags.livingroomFinalDialogueShown;
+    if (!keepQueue) {
+        gameState.dialogueQueue = [];
+    }
     gameState.justCompleted = false;
     if (typingTimer) {
         clearTimeout(typingTimer);
@@ -1101,6 +1275,10 @@ function playDrawerCloseIfNeeded() {
 function playPhotoFrameBgSwapIfNeeded() {
     if (!gameState.flags.playPhotoFrameBgSwap) return;
     const livingroomCfg = SCENE_CONFIGS['livingroom'];
+    if (gameState.flags.livingroomFinalApplied) {
+        gameState.flags.playPhotoFrameBgSwap = false;
+        return;
+    }
     if (livingroomCfg && livingroomCfg.backgroundAfter) {
         transitionSceneBackground('livingroom', livingroomCfg.backgroundAfter, 2000);
     }
@@ -1288,6 +1466,7 @@ function handleFridgeDoorClick(texts, choicePromptOverride) {
                     markKeyItemFound('soju', { line: finalLine, image: sojuImg });
                     gameState.flags.sojuOpened = true;
                     gameState.flags.sojuOpenInProgress = false;
+                    checkLivingroomFinalBackground();
                 });
             },
             onNo: () => {
@@ -1406,6 +1585,7 @@ function completePhotoFrameFlow() {
         if (Array.isArray(texts) && texts.length > 0) {
             gameState.interactionIndex['photo-frame'] = texts.length - 1;
         }
+        checkLivingroomFinalBackground();
     };
 
     const audio = drillScrewSfx;
@@ -1735,6 +1915,8 @@ function startGame() {
     initDoorAudioForNavButtons();
     initIntroScene();
     updateInventory();
+    checkLivingroomFinalBackground();
+    updateGiftBoxState();
 }
 
 function updateLoadingProgress(loaded, total) {

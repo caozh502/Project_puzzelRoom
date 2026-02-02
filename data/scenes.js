@@ -8,7 +8,8 @@ window.GAME_CONFIG = {
         visitedScenes: {}
     },
     audio: {
-        detectiveBGM: { volume: 0.2, loop: true, autoplay: false },
+        detectiveBGM: { volume: 0, loop: true, autoplay: false },
+        finalBgm: { volume: 0.6, loop: false },
         clickSfx: { volume: 0.1 },
         lightSfx: { volume: 0.6 },
         startDotSfx: { volume: 0.1, loop: false },
@@ -26,10 +27,11 @@ window.GAME_CONFIG = {
         fridgeCloseSfx: { volume: 0.6 },
         openBottleSfx: { volume: 0.6 },
         drinkSojuSfx: { volume: 0.6 },
-        findOpenerSfx: { volume: 0.3 }
+        findOpenerSfx: { volume: 0.3 },
+        birdsChirpingSfx: { volume: 0, loop: true },
     },
     audioSources: {
-        detectiveBGM: 'assets/Audio/loveDetective_BGM.mp3',
+        detectiveBGM: 'assets/Audio/loveDetective_BGM.m4a',
         clickSfx: 'assets/Audio/mouseClick_SFX.mp3',
         lightSfx: 'assets/Audio/lightOn_SFX.mp3',
         startDotSfx: 'assets/Audio/startDot_SFX.mp3',
@@ -48,7 +50,9 @@ window.GAME_CONFIG = {
         openBottleSfx: 'assets/Audio/openBottle_SFX.mp3',
         drinkSojuSfx: 'assets/Audio/drinkSoju.mp3',
         findOpenerSfx: 'assets/Audio/findOpener_SFX.mp3',
-        clickDotSfx: 'assets/Audio/clickDot_SFX.mp3'
+        clickDotSfx: 'assets/Audio/clickDot_SFX.mp3',
+        birdsChirpingSfx: 'assets/Audio/birdsChirping_SFX.mp3',
+        finalBgm: 'assets/Audio/final_BGM.mp3'
     },
     // 交互展示图片与其他独立图片的统一映射
     imageSources: {
@@ -96,7 +100,11 @@ window.GAME_CONFIG = {
                 position: 'center',
                 repeat: 'no-repeat'
             },
-            backgroundAfter: 'assets/Picture/livingroom.png'
+            backgroundAfter: 'assets/Picture/livingroom.png',
+            backgroundFinal: 'assets/Picture/livingroom_giftBox.png',
+            giftCodePrompt: '▲■●✦',
+            giftCodeAnswer: '5732',
+            finalLine: '咦，茶几上的杂物怎么不见了……这个礼物盒，有点眼熟……'
         },
         bedroom: {
             id: 'bedroom',
@@ -140,7 +148,7 @@ window.GAME_CONFIG = {
     },
     objectConfigs: {
         // livingroom
-        'gift-box': { padding: '1.2% 1.2%', top: '46%', left: '52%' },
+        'gift-box': { padding: '2.5%', top: '68%', left: '48.5%' },
         'aroma-candle': { padding: '1%', top: '62.5%', left: '73%', rotation: '2deg' },
         'switch-console': { padding: '2% 2.5%', top: '64%', left: '77%', rotation: '10deg' },
         'snack-box': { padding: '2% 4.5%', top: '78%', left: '47.5%'},
