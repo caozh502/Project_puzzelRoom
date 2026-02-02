@@ -49,9 +49,9 @@ let nextTipTimer = null;
 
 // 引导阶段标记与全局元素引用
 let introPhase = true;
-let imageOverlay, overlayImage, startDot;
+let imageOverlay, overlayImage, startDot, introRippleLoader;
 // 音频变量
-let detectiveBGM, clickSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
+let detectiveBGM, clickSfx, clickDotSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
 let guitarSfx, violinSfx, pianoSfx, showerSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx, findOpenerSfx, clothRemoveSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
@@ -59,6 +59,8 @@ let fridgeNote, fridgeDoor;
 let choiceOverlay, choiceTextEl, choiceYesBtn, choiceNoBtn;
 let choiceHandlers = null;
 let inventoryDisplay, inventoryTextEl, inventoryPrevBtn, inventoryNextBtn;
+let introRippleCycles = 0;
+let introGiftShown = false;
 // 加载覆盖层元素
 let loadingOverlay, progressFill, progressText;
 let isMuted = false;
@@ -596,6 +598,7 @@ function cacheElements() {
     clickSfx = document.getElementById('click-sfx');
     lightSfx = document.getElementById('light-sfx');
     startDotSfx = document.getElementById('startdot-sfx');
+    clickDotSfx = document.getElementById('clickdot-sfx');
     wakeUpSfx = document.getElementById('wake-up-sfx');
     doorOpenSfx = document.getElementById('door-open-sfx');
     footStepsSfx = document.getElementById('footsteps-sfx');
@@ -617,6 +620,7 @@ function cacheElements() {
     imageOverlay = document.getElementById('image-overlay');
     overlayImage = document.getElementById('overlay-image');
     startDot = document.getElementById('start-dot');
+    introRippleLoader = document.querySelector('#scene-intro .ripple-loader');
     giftBox = document.getElementById('gift-box');
     fridgeNote = document.getElementById('fridge-note');
     fridgeDoor = document.getElementById('fridge-door');
@@ -677,6 +681,7 @@ function initAudio() {
     const audioMap = {
         detectiveBGM,
         clickSfx,
+        clickDotSfx,
         lightSfx,
         startDotSfx,
         wakeUpSfx,
@@ -719,6 +724,7 @@ function initAudio() {
             if (clickSfx) clickSfx.muted = isMuted;
             if (lightSfx) lightSfx.muted = isMuted;
             if (startDotSfx) startDotSfx.muted = isMuted;
+            if (clickDotSfx) clickDotSfx.muted = isMuted;
             if (wakeUpSfx) wakeUpSfx.muted = isMuted;
             if (doorOpenSfx) doorOpenSfx.muted = isMuted;
             if (footStepsSfx) footStepsSfx.muted = isMuted;
@@ -752,6 +758,77 @@ function initDoorAudioForNavButtons() {
             }, delayMs);
         });
     });
+}
+
+function setupIntroRippleStates() {
+    if (!introRippleLoader) return;
+
+    const applyState = (options = {}) => {
+        const {
+            duration = '7s',
+            delayStep = '2s',
+            countClass = 'count-3'
+        } = options;
+        introRippleLoader.style.setProperty('--ripple-duration', duration);
+        introRippleLoader.style.setProperty('--ripple-delay-step', delayStep);
+        introRippleLoader.classList.remove('count-1', 'count-2', 'count-3', 'count-4');
+        if (countClass) introRippleLoader.classList.add(countClass);
+    };
+
+    // 初始：3圈、5s、1s 延迟
+    applyState({ duration: '5s', delayStep: '1s', countClass: 'count-3' });
+    introRippleCycles = 0;
+    introGiftShown = false;
+}
+
+function handleStartDotClick() {
+    if (!introRippleLoader) {
+        revealIntroGift();
+        return;
+    }
+
+    playSfx(clickDotSfx);
+
+    // 点击后切换到 5 圈、2s、0.5s
+    introRippleLoader.style.setProperty('--ripple-duration', '2.5s');
+    introRippleLoader.style.setProperty('--ripple-delay-step', '1.5s');
+    introRippleLoader.classList.remove('count-1', 'count-2', 'count-3', 'count-4');
+
+    // 改为监听最后一个圈的动画循环，避免受前几圈延迟影响
+    const lastRing = introRippleLoader.querySelector('div:nth-child(5)');
+    if (lastRing) {
+        if (lastRing._introOnIter) {
+            lastRing.removeEventListener('animationiteration', lastRing._introOnIter);
+        }
+        introRippleCycles = 0;
+        const onIter = () => {
+            introRippleCycles += 1;
+            if (introRippleCycles >= 3 && !introGiftShown) {
+                introGiftShown = true;
+                lastRing.removeEventListener('animationiteration', onIter);
+                lastRing._introOnIter = null;
+                revealIntroGift();
+            }
+        };
+        lastRing._introOnIter = onIter;
+        lastRing.addEventListener('animationiteration', onIter);
+    } else {
+        revealIntroGift();
+    }
+}
+
+function revealIntroGift() {
+    if (startDotSfx) { startDotSfx.pause(); startDotSfx.currentTime = 0; }
+    const giftSrc = IMAGE_SOURCES['gift'];
+    if (giftSrc) {
+        openImageOverlay(giftSrc, { fadeIn: true });
+    } else if (overlayImage && imageOverlay) {
+        // 兜底：若未配置礼物图，保持旧逻辑
+        overlayImage.src = '';
+        imageOverlay.classList.remove('hidden');
+        document.body.classList.add('image-open');
+    }
+    showDialogue("等了你好久了，这是开启未来的钥匙……");
 }
 
 function initUIControls() {
@@ -1526,16 +1603,9 @@ function initIntroScene() {
         try { startDotSfx.play(); } catch (_) {}
     }
 
+    setupIntroRippleStates();
     if (startDot) {
-        startDot.addEventListener('click', () => {
-            if (startDotSfx) { startDotSfx.pause(); startDotSfx.currentTime = 0; }
-            if (overlayImage && imageOverlay) {
-                overlayImage.src = IMAGE_SOURCES['gift'];
-                imageOverlay.classList.remove('hidden');
-                document.body.classList.add('image-open');
-            }
-            showDialogue("等了你好久了，这是开启未来的钥匙……");
-        });
+        startDot.addEventListener('click', handleStartDotClick);
     }
 }
 

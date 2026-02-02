@@ -99,14 +99,48 @@ body {
 #scene-intro {
     background-color: #000;
 }
-#scene-livingroom { 
-    background-image: url('assets/Picture/room.png');
-    background-size: contain;
-    background-position: center;
-    background-repeat: no-repeat;
+.ripple-loader {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: calc(var(--ripple-width) * var(--ripple-scale));
+    height: calc(var(--ripple-height) * var(--ripple-scale));
+    pointer-events: none;
+    z-index: 350;
+    --ripple-scale: 2;
+    --ripple-width: 50%;
+    --ripple-height: calc(var(--ripple-width) * 16 / 9);
+    --ripple-duration: 5s;
+    --ripple-delay-step: 0.5s;
 }
-#scene-bedroom { background-color: #9a8c98; }
-#scene-balcony { background-color: #c9ada7; }
+
+.ripple-loader div {
+    position: absolute;
+    inset: 0;
+    border: 15px solid #8d90ea;
+    border-radius: 50%;
+    animation: ripple-loader var(--ripple-duration, 2s) ease-out infinite;
+}
+
+.ripple-loader div:nth-child(2) {
+    animation-delay: calc(-1 * var(--ripple-delay-step) * 1);
+}
+.ripple-loader div:nth-child(3) {
+    animation-delay: calc(-1 * var(--ripple-delay-step) * 2);
+}
+.ripple-loader div:nth-child(4) {
+    animation-delay: calc(-1 * var(--ripple-delay-step) * 3);
+}
+.ripple-loader div:nth-child(5) {
+    animation-delay: calc(-1 * var(--ripple-delay-step) * 4);
+}
+
+/* 控制涟漪数量（基于已存在的5个节点，隐藏多余的） */
+.ripple-loader.count-1 div:nth-child(n+2) { display: none; }
+.ripple-loader.count-2 div:nth-child(n+3) { display: none; }
+.ripple-loader.count-3 div:nth-child(n+4) { display: none; }
+.ripple-loader.count-4 div:nth-child(n+5) { display: none; }
 
 /* 互动与导航 */
 .interactive-obj {
@@ -380,7 +414,7 @@ body {
     background: #ffffff;
     border-radius: 50%;
     box-shadow: 0 0 12px rgba(255, 255, 255, 0.9), 0 0 24px rgba(255, 255, 255, 0.6);
-    animation: pulse 3s ease-in-out infinite;
+    animation: pulse 2s ease-in-out infinite;
     cursor: pointer;
     z-index: 350;
     /* display: none !important; */
@@ -451,9 +485,20 @@ body.fade-out {
 }
 
 @keyframes pulse {
-    0% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.9); }
-    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
-    100% { opacity: 0.2; transform: translate(-50%, -50%) scale(0.9); }
+    0% { opacity: 0.2; }
+    50% { opacity: 1; }
+    100% { opacity: 0.2; }
+}
+
+@keyframes ripple-loader {
+    0% {
+        opacity: 0.8;
+        transform: scale(0);
+    }
+    100% {
+        opacity: 0;
+        transform: scale(1);
+    }
 }
 
 @keyframes fadeOutIntro {

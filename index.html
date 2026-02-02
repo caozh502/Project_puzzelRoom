@@ -21,7 +21,14 @@
     <div id="game-container">
         <div id="scene-intro" class="scene active">
             <!-- 开始闪烁光点（点击开始） -->
-            <div id="start-dot" class="start-dot" title="点击开始"></div>
+            <div class="ripple-loader" aria-hidden="true">
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <div id="start-dot" class="start-dot" title=""></div>
         </div>
 
         <div id="scene-livingroom" class="scene">
@@ -107,6 +114,7 @@
         <audio id="guitar-sfx"></audio>
         <audio id="violin-sfx"></audio>
         <audio id="piano-sfx"></audio>
+        <audio id="clickdot-sfx"></audio>
         <audio id="cloth-remove-sfx"></audio>
         <audio id="shower-sfx"></audio>
         <audio id="drawer-close-sfx"></audio>

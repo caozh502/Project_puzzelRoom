@@ -47,7 +47,8 @@ window.GAME_CONFIG = {
         fridgeCloseSfx: 'assets/Audio/fridgeClose_SFX.mp3',
         openBottleSfx: 'assets/Audio/openBottle_SFX.mp3',
         drinkSojuSfx: 'assets/Audio/drinkSoju.mp3',
-        findOpenerSfx: 'assets/Audio/findOpener_SFX.mp3'
+        findOpenerSfx: 'assets/Audio/findOpener_SFX.mp3',
+        clickDotSfx: 'assets/Audio/clickDot_SFX.mp3'
     },
     // 交互展示图片与其他独立图片的统一映射
     imageSources: {
