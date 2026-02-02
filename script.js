@@ -28,7 +28,7 @@ const foundKeyItemIds = new Set();
 
 const DIALOGUE_SPEED = 40;
 // 调试开关：禁用醒来效果（眨眼+去模糊）
-const ENABLE_WAKE_EFFECT = false;
+const ENABLE_WAKE_EFFECT = true;
 // 调试开关：跳过 intro 场景
 const ENABLE_INTRO_SCENE = true;
 
@@ -66,12 +66,27 @@ let loadingOverlay, progressFill, progressText;
 let isMuted = false;
 let interactivesHidden = false;
 let diagBox, diagText;
+const GIFT_BLUR_LEVELS = [12, 9, 6, 3, 0];
+const DEFAULT_GIFT_LINES = [
+    "等了你好久了，这是开启未来的钥匙……",
+    "它来自未知的旅程，也等待你的触碰。",
+    "拨开迷雾，你会看清它的模样。",
+    "握紧它，前路将被点亮。",
+    "现在，准备好了就出发吧。"
+];
 
 // --- 工具方法 ---
 function playSfx(audio) {
     if (!audio || isMuted) return;
     audio.currentTime = 0;
     audio.play();
+}
+
+function setGiftBlur(step) {
+    if (!overlayImage) return;
+    const idx = Math.min(Math.max(step, 0), GIFT_BLUR_LEVELS.length - 1);
+    overlayImage.style.transition = overlayImage.style.transition || 'filter 0.8s ease';
+    overlayImage.style.filter = `blur(${GIFT_BLUR_LEVELS[idx]}px)`;
 }
 
 function applyInitialState() {
@@ -407,6 +422,13 @@ function completeTypingImmediately() {
     }
 }
 
+function startIntroExitEffects() {
+    if (gameState.flags.introExitStarted) return;
+    gameState.flags.introExitStarted = true;
+    playSfx(wakeUpSfx);
+    document.body.classList.add('fade-out');
+}
+
 function handleIntroComplete() {
     if (!introPhase) return;
     // 关闭图片覆盖层与模糊
@@ -421,12 +443,9 @@ function handleIntroComplete() {
         if (overlay) overlay.classList.add('hidden');
     }
 
-    // 播放唤醒音效
-    playSfx(wakeUpSfx);
-
-    // 添加淡出效果
-    document.body.classList.add('fade-out');
-    // 2秒后进入客厅
+    // 播放唤醒音效 + 身体淡出（只触发一次）
+    startIntroExitEffects();
+    // 4秒后进入客厅
     setTimeout(() => {
         document.body.classList.remove('fade-out');
         goToScene(INTRO_END_SCENE);
@@ -438,7 +457,7 @@ function handleIntroComplete() {
             startWakeEffect(container, overlay);
         }
         fadeInCoreUIControls();
-    }, 2000);
+    }, 4000);
 
     introPhase = false;
 }
@@ -513,12 +532,25 @@ function onDialogueBoxClick() {
     // 若存在后续队列，则显示下一条对话
     if (gameState.dialogueQueue.length > 0) {
         const next = gameState.dialogueQueue.shift();
+        if (gameState.flags.giftBlurActive) {
+            const nextStep = Math.min((gameState.flags.giftBlurStep || 0) + 1, GIFT_BLUR_LEVELS.length - 1);
+            gameState.flags.giftBlurStep = nextStep;
+            setGiftBlur(nextStep);
+            if (nextStep === GIFT_BLUR_LEVELS.length - 1 && gameState.dialogueQueue.length === 0) {
+                gameState.flags.giftBlurActive = false;
+            }
+        }
         handleDrawerCabinetQueuedReveal(next);
         handleElectricPianoQueuedReveal(next);
         showDialogue(next);
         return;
     }
-    // 否则关闭对话框
+    // 否则关闭对话框；引导礼物结束时改为淡出
+    if (introPhase && gameState.flags.giftSequenceActive && !gameState.flags.giftFadeOutStarted) {
+        fadeOutIntroGift();
+        return;
+    }
+
     diagBox.classList.add('hidden');
     diagBox.classList.remove('show-next');
 
@@ -652,7 +684,9 @@ function initDialogueHandlers() {
     document.addEventListener('click', (event) => {
         const overlayVisible = imageOverlay && !imageOverlay.classList.contains('hidden');
         const dialogueVisible = diagBox && !diagBox.classList.contains('hidden');
+        // 引导礼物揭示/淡出期间保持覆盖层与对话框，不自动关闭
         if (overlayVisible && dialogueVisible) {
+            if (introPhase && (gameState.flags.giftBlurActive || gameState.flags.giftSequenceActive)) return;
             closeOverlayAndDialogue();
             event.preventDefault();
             event.stopPropagation();
@@ -790,8 +824,8 @@ function handleStartDotClick() {
     playSfx(clickDotSfx);
 
     // 点击后切换到 5 圈、2s、0.5s
-    introRippleLoader.style.setProperty('--ripple-duration', '2.5s');
-    introRippleLoader.style.setProperty('--ripple-delay-step', '1.5s');
+    introRippleLoader.style.setProperty('--ripple-duration', '1.5s');
+    introRippleLoader.style.setProperty('--ripple-delay-step', '0.5s');
     introRippleLoader.classList.remove('count-1', 'count-2', 'count-3', 'count-4');
 
     // 改为监听最后一个圈的动画循环，避免受前几圈延迟影响
@@ -803,7 +837,7 @@ function handleStartDotClick() {
         introRippleCycles = 0;
         const onIter = () => {
             introRippleCycles += 1;
-            if (introRippleCycles >= 3 && !introGiftShown) {
+            if (introRippleCycles >= 6 && !introGiftShown) {
                 introGiftShown = true;
                 lastRing.removeEventListener('animationiteration', onIter);
                 lastRing._introOnIter = null;
@@ -820,15 +854,83 @@ function handleStartDotClick() {
 function revealIntroGift() {
     if (startDotSfx) { startDotSfx.pause(); startDotSfx.currentTime = 0; }
     const giftSrc = IMAGE_SOURCES['gift'];
+    const introCfg = SCENE_CONFIGS['intro'] || {};
+    const giftLines = Array.isArray(introCfg.giftLines) && introCfg.giftLines.length > 0
+        ? introCfg.giftLines
+        : DEFAULT_GIFT_LINES;
+
+    gameState.flags.giftSequenceActive = true;
+    gameState.flags.giftFadeOutStarted = false;
+    gameState.flags.giftBlurActive = true;
+    gameState.flags.giftBlurStep = 0;
+
     if (giftSrc) {
         openImageOverlay(giftSrc, { fadeIn: true });
+        setGiftBlur(0);
     } else if (overlayImage && imageOverlay) {
         // 兜底：若未配置礼物图，保持旧逻辑
         overlayImage.src = '';
         imageOverlay.classList.remove('hidden');
         document.body.classList.add('image-open');
     }
-    showDialogue("等了你好久了，这是开启未来的钥匙……");
+
+    const [firstLine, ...restLines] = giftLines;
+    if (firstLine) showDialogue(firstLine);
+    if (restLines.length > 0) {
+        gameState.dialogueQueue.push(...restLines);
+    }
+}
+
+function fadeOutIntroGift() {
+    if (!introPhase || gameState.flags.giftFadeOutStarted) return false;
+    gameState.flags.giftFadeOutStarted = true;
+    const overlay = imageOverlay;
+    const dialogue = diagBox;
+
+    // 开始礼物淡出时，同时触发唤醒音效与背景淡出
+    startIntroExitEffects();
+
+    const finish = () => {
+        if (overlay) {
+            overlay.classList.add('hidden');
+            overlay.classList.remove('fade-out');
+        }
+        if (overlayImage) {
+            overlayImage.classList.remove('gift-image');
+            overlayImage.src = '';
+        }
+        if (dialogue) {
+            dialogue.classList.add('hidden');
+            dialogue.classList.remove('fade-out');
+            dialogue.classList.remove('show-next');
+        }
+        document.body.classList.remove('image-open');
+        gameState.flags.giftSequenceActive = false;
+        gameState.flags.giftBlurActive = false;
+        gameState.flags.giftBlurStep = 0;
+        handleIntroComplete();
+    };
+
+    let finished = false;
+    const onOverlayEnd = () => {
+        if (finished) return;
+        finished = true;
+        finish();
+    };
+
+    if (overlay) {
+        overlay.classList.remove('fade-in');
+        overlay.classList.add('fade-out');
+        overlay.addEventListener('animationend', onOverlayEnd, { once: true });
+    }
+    if (dialogue) {
+        dialogue.classList.add('fade-out');
+    }
+
+    if (!overlay) {
+        setTimeout(onOverlayEnd, 700);
+    }
+    return true;
 }
 
 function initUIControls() {
@@ -861,6 +963,8 @@ function initUIControls() {
 
     if (imageOverlay) {
         imageOverlay.addEventListener('click', () => {
+            // 引导礼物阶段保持淡出节奏，不提前关闭
+            if (introPhase && gameState.flags.giftSequenceActive) return;
             closeOverlayAndDialogue();
         });
     }
@@ -934,6 +1038,8 @@ function openImageOverlay(src, options = {}) {
     if (!src || !overlayImage || !imageOverlay) return;
     const { fadeIn = false } = options;
     overlayImage.src = src;
+    const isGiftImg = IMAGE_SOURCES && IMAGE_SOURCES['gift'] && src === IMAGE_SOURCES['gift'];
+    overlayImage.classList.toggle('gift-image', !!isGiftImg);
     imageOverlay.classList.remove('hidden');
     imageOverlay.classList.toggle('fade-in', fadeIn);
     document.body.classList.add('image-open');
@@ -944,6 +1050,7 @@ function closeImageOverlay() {
     imageOverlay.classList.add('hidden');
     imageOverlay.classList.remove('fade-in');
     document.body.classList.remove('image-open');
+    if (overlayImage) overlayImage.classList.remove('gift-image');
     if (overlayImage) overlayImage.src = '';
 }
 
@@ -1204,6 +1311,12 @@ function handleFridgeDoorClick(texts, choicePromptOverride) {
 }
 
 function closeOverlayAndDialogue() {
+    // 引导礼物阶段：改为淡出退出
+    if (introPhase && gameState.flags.giftSequenceActive && !gameState.flags.giftFadeOutStarted) {
+        fadeOutIntroGift();
+        return;
+    }
+
     closeImageOverlay();
     closeDialogueBox();
     hideChoiceOverlay();

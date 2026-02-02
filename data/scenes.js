@@ -78,7 +78,14 @@ window.GAME_CONFIG = {
     scenes: {
         intro: {
             id: 'intro',
-            background: { type: 'color', value: '#000' }
+            background: { type: 'color', value: '#000' },
+            giftLines: [
+                '等了你好久了，这是开启未来的钥匙……',
+                '它来自未知的旅程，也等待你的触碰。',
+                '拨开迷雾，你会看清它的模样。',
+                '握紧它，前路将被点亮。',
+                '现在，准备好了就出发吧。'
+            ]
         },
         livingroom: {
             id: 'livingroom',
