@@ -198,6 +198,15 @@ function showGiftCodePrompt() {
     setTimeout(() => input.focus(), 0);
 }
 
+function handleLivingroomFinalDialogue() {
+    const active = document.querySelector('.scene.active');
+    const isLivingroomActive = active && active.id === 'scene-livingroom';
+    if (gameState.flags.livingroomFinalApplied && !gameState.flags.livingroomFinalDialogueShown && isLivingroomActive) {
+        gameState.isTyping = true;
+        showDialogue(LIVINGROOM_FINAL_LINE);
+        gameState.flags.livingroomFinalDialogueShown = true;
+    }
+}
 function checkLivingroomFinalBackground() {
     const livingCfg = SCENE_CONFIGS['livingroom'];
     if (!livingCfg || !livingCfg.backgroundFinal) return;
@@ -219,10 +228,6 @@ function checkLivingroomFinalBackground() {
 
     updateGiftBoxState();
 
-    if (gameState.flags.livingroomFinalApplied && !gameState.flags.livingroomFinalDialogueShown && isLivingroomActive) {
-        showDialogue(LIVINGROOM_FINAL_LINE);
-        gameState.flags.livingroomFinalDialogueShown = true;
-    }
 }
 
 function applyInitialState() {
@@ -1229,10 +1234,11 @@ function closeDialogueBox() {
     if (!diagBox) return;
     diagBox.classList.add('hidden');
     diagBox.classList.remove('show-next');
-    const keepQueue = gameState.flags.livingroomFinalApplied && !gameState.flags.livingroomFinalDialogueShown;
-    if (!keepQueue) {
-        gameState.dialogueQueue = [];
+    if (gameState.flags.livingroomFinalApplied && !gameState.flags.livingroomFinalDialogueShown) {
+        handleLivingroomFinalDialogue();
+        return;
     }
+    gameState.dialogueQueue = [];
     gameState.justCompleted = false;
     if (typingTimer) {
         clearTimeout(typingTimer);
@@ -1495,7 +1501,6 @@ function closeOverlayAndDialogue() {
         fadeOutIntroGift();
         return;
     }
-
     closeImageOverlay();
     closeDialogueBox();
     hideChoiceOverlay();
