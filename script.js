@@ -47,6 +47,7 @@ const gameState = {
 // 记录打字计时器以便可取消
 let typingTimer = null;
 let nextTipTimer = null;
+let finalLoopCleanup = null;
 
 // 引导阶段标记与全局元素引用
 let introPhase = true;
@@ -131,6 +132,213 @@ function playFinalBgm() {
     try { finalBgm.play(); } catch (_) {}
 }
 
+function buildFinalLoopPhotoList() {
+    const explicitPhotos = Array.isArray(LIVINGROOM_CONFIG.finalLoopPhotos) ? LIVINGROOM_CONFIG.finalLoopPhotos : [];
+    if (explicitPhotos.length > 0) {
+        return Promise.resolve(explicitPhotos);
+    }
+
+    const folder = typeof LIVINGROOM_CONFIG.finalLoopPhotoFolder === 'string'
+        ? LIVINGROOM_CONFIG.finalLoopPhotoFolder.replace(/\\/g, '/')
+        : '';
+    if (!folder) {
+        return Promise.resolve([]);
+    }
+
+    const extension = String(LIVINGROOM_CONFIG.finalLoopPhotoExtension || 'jpg').replace(/^\./, '').toLowerCase();
+    const maxAttempts = Number.isInteger(LIVINGROOM_CONFIG.finalLoopMaxAttempt)
+        ? LIVINGROOM_CONFIG.finalLoopMaxAttempt
+        : 50;
+    const maxConsecutiveMisses = Number.isInteger(LIVINGROOM_CONFIG.finalLoopMaxMissing)
+        ? LIVINGROOM_CONFIG.finalLoopMaxMissing
+        : 3;
+
+    const photos = [];
+    let index = 1;
+    let missingCount = 0;
+
+    const tryLoad = () => {
+        if (index > maxAttempts || missingCount >= maxConsecutiveMisses) {
+            return Promise.resolve(photos);
+        }
+
+        const url = `${folder}/${index}.${extension}`;
+        return new Promise(resolve => {
+            const img = new Image();
+            let finished = false;
+            const cleanup = () => {
+                if (finished) return;
+                finished = true;
+                img.onload = null;
+                img.onerror = null;
+            };
+            img.onload = () => {
+                cleanup();
+                photos.push(url);
+                missingCount = 0;
+                index += 1;
+                resolve(tryLoad());
+            };
+            img.onerror = () => {
+                cleanup();
+                missingCount += 1;
+                index += 1;
+                resolve(tryLoad());
+            };
+            img.src = url;
+        });
+    };
+
+    return tryLoad();
+}
+
+async function playFinalLoopPhotos() {
+    const photos = await buildFinalLoopPhotoList();
+    const displayTime = LIVINGROOM_CONFIG.finalPhotoDisplayTime || 3000;
+    if (!photos || photos.length === 0) return;
+
+    const photoContainer = document.createElement('div');
+    photoContainer.id = 'final-loop-container';
+    document.body.appendChild(photoContainer);
+
+    const photoInner = document.createElement('div');
+    photoInner.className = 'final-loop-inner';
+    photoContainer.appendChild(photoInner);
+
+    const imgs = [document.createElement('img'), document.createElement('img')];
+    imgs.forEach(img => {
+        img.className = 'final-loop-photo';
+        img.style.opacity = '0';
+        photoInner.appendChild(img);
+    });
+
+    const gameContainer = document.getElementById('game-container');
+    // 在播放最终照片循环时添加专用类以复用滤镜样式（不会触发 image-open/dimmed 的全局变暗）
+    document.body.classList.add('final-loop-active');
+    const timeoutIds = [];
+    let active = true;
+    let finalClickHandler = null;
+    let finalEscHandler = null;
+
+    const createTimeout = (handler, delay) => {
+        const id = window.setTimeout(handler, delay);
+        timeoutIds.push(id);
+        return id;
+    };
+
+    const cleanupLoop = () => {
+        if (!active) return;
+        active = false;
+        timeoutIds.forEach(clearTimeout);
+        timeoutIds.length = 0;
+        // 移除可能注册的最终点击/按键处理器
+        try {
+            if (finalClickHandler) photoContainer.removeEventListener('click', finalClickHandler);
+        } catch (e) {}
+        try {
+            if (finalEscHandler) document.removeEventListener('keydown', finalEscHandler);
+        } catch (e) {}
+        if (photoContainer.parentElement) {
+            photoContainer.remove();
+        }
+        // 移除最终循环激活类
+        document.body.classList.remove('final-loop-active');
+        if (finalLoopCleanup === cleanupLoop) {
+            finalLoopCleanup = null;
+        }
+    };
+
+    finalLoopCleanup = cleanupLoop;
+
+    const crossfade = (nextImg, prevImg) => {
+        if (!active) return;
+        nextImg.style.opacity = '1';
+        prevImg.style.opacity = '0';
+    };
+
+    const showPhoto = (index) => {
+        if (!active) return;
+        const slot = index % 2;
+        const nextImg = imgs[slot];
+        const prevImg = imgs[1 - slot];
+
+        nextImg.style.zIndex = '2';
+        prevImg.style.zIndex = '1';
+        nextImg.style.opacity = '0';
+        nextImg.src = photos[index];
+
+        const startTransition = () => {
+            if (!active) return;
+            createTimeout(() => crossfade(nextImg, prevImg), 50);
+        };
+
+        if (nextImg.complete && nextImg.naturalWidth > 0) {
+            startTransition();
+        } else {
+            nextImg.onload = startTransition;
+            nextImg.onerror = startTransition;
+        }
+
+        if (index + 1 < photos.length) {
+            createTimeout(() => showPhoto(index + 1), displayTime);
+        } else {
+            // 最后一张：保持可见，等待用户点击或按 Esc 关闭
+            // 注册点击处理器（以及备用的 Esc 键）以便手动关闭
+            finalClickHandler = () => {
+                if (!active) return;
+                nextImg.style.opacity = '0';
+                createTimeout(() => cleanupLoop(), 500);
+            };
+            photoContainer.addEventListener('click', finalClickHandler);
+
+            finalEscHandler = (e) => {
+                if (e.key === 'Escape') {
+                    cleanupLoop();
+                }
+            };
+            document.addEventListener('keydown', finalEscHandler);
+            // 不再安排自动进度，保持最后一张直到用户交互
+        }
+    };
+
+    showPhoto(0);
+}
+
+function applyFinalVictory() {
+    const livingCfg = SCENE_CONFIGS['livingroom'];
+    if (livingCfg) {
+        gameState.flags.livingroomFinalApplied = true;
+        if (livingCfg.backgroundFinal) {
+            // 保持 background 为对象结构，仅更新其 value，便于 applySceneBackground 正常工作
+            if (livingCfg.background && typeof livingCfg.background === 'object') {
+                livingCfg.background.value = livingCfg.backgroundFinal;
+            } else {
+                livingCfg.background = { type: 'image', value: livingCfg.backgroundFinal };
+            }
+        }
+    }
+    updateGiftBoxState();
+    goToScene('livingroom');
+    // 如果当前已经在客厅，做一次平滑过渡到 final 背景
+    try {
+        transitionSceneBackground('livingroom', livingCfg && livingCfg.backgroundFinal ? livingCfg.backgroundFinal : undefined, 1200);
+    } catch (e) {}
+
+    const finalLines = Array.isArray(livingCfg?.finalDialogueLines) && livingCfg.finalDialogueLines.length > 0
+        ? livingCfg.finalDialogueLines
+        : [livingCfg?.finalLine || '通关成功！'];
+    const [firstLine, ...restLines] = finalLines;
+    showDialogue(firstLine);
+    if (restLines.length > 0) {
+        gameState.dialogueQueue.push(...restLines);
+    }
+
+    playFinalBgm();
+    playFinalLoopPhotos();
+    gameState.flags.giftCodeSolved = true;
+    gameState.flags.livingroomFinalDialogueShown = true;
+}
+
 function showGiftCodePrompt() {
     if (gameState.flags.giftCodePromptOpen) return;
     gameState.flags.giftCodePromptOpen = true;
@@ -177,8 +385,18 @@ function showGiftCodePrompt() {
         if (val === GIFT_CODE_ANSWER) {
             gameState.flags.giftCodeSolved = true;
             closePrompt();
-            showDialogue('通关成功');
+            const finalLines = LIVINGROOM_CONFIG.finalDialogueLines || ['通关成功'];
+            if (Array.isArray(finalLines) && finalLines.length > 0) {
+                const [first, ...rest] = finalLines;
+                showDialogue(first);
+                if (rest.length > 0) {
+                    gameState.dialogueQueue.push(...rest);
+                }
+            } else {
+                showDialogue('通关成功');
+            }
             playFinalBgm();
+            playFinalLoopPhotos();
         } else {
             input.value = '';
             input.focus();
@@ -1138,6 +1356,7 @@ function initUIControls() {
             if (!container) return;
             const isDimmed = container.classList.contains('dimmed');
             container.classList.toggle('dimmed', !isDimmed);
+            gameState.flags.lightSwitchUsed = true
             playSfx(lightSfx);
             showDialogue(isDimmed ? "打开了灯，房间恢复明亮。" : "关上了灯，房间又暗了下来。");
         });
@@ -1796,6 +2015,10 @@ function initInteractions() {
         const el = document.getElementById(id);
         if (!el) return;
         el.addEventListener('click', () => {
+            if (!gameState.flags.lightSwitchUsed) {
+                showDialogue('房间太暗了，要先开打才看得清呢…');
+                return;
+            }
             // 梳妆台特殊处理
             if (id === 'vanity-table') {
                 const handled = handleVanityClick(texts);
@@ -1959,5 +2182,18 @@ document.addEventListener('DOMContentLoaded', () => {
     preloadAssets(updateLoadingProgress).then(() => {
         hideLoadingOverlay();
         startGame();
+
+        // 调试快捷键：按 Alt+Q 直接进入通关场景；按 ESC 退出最终照片循环
+        window.addEventListener('keydown', (event) => {
+            // Alt+Q 或 Alt+q
+            if (event.altKey && String(event.key).toLowerCase() === 'q') {
+                event.preventDefault();
+                applyFinalVictory();
+            }
+            if (event.key === 'Escape' && typeof finalLoopCleanup === 'function') {
+                event.preventDefault();
+                finalLoopCleanup();
+            }
+        });
     });
 });

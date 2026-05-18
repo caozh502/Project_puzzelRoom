@@ -336,6 +336,52 @@ body {
     z-index: 400;
 }
 
+#final-loop-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: transparent;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 380;
+    /* 允许容器接收点击，以便点击空白处可以关闭最后一张照片；
+       图片本身保持 pointer-events: none，使点击通过图片落到容器上 */
+    pointer-events: auto;
+}
+
+#final-loop-container .final-loop-inner {
+    width: 80vw;
+    max-width: 1000px;
+    height: 80vh;
+    max-height: 85vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    overflow: hidden;
+}
+
+#final-loop-container img.final-loop-photo {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    max-width: 90%;
+    max-height: 90%;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border: 3px solid rgba(255, 255, 255, 0.8);
+    border-radius: 8px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+    opacity: 0;
+    transition: opacity 1s ease-in-out;
+    pointer-events: none;
+}
+
 #image-overlay.fade-in {
     animation: overlayFadeIn 2s ease-out forwards;
 }
@@ -495,6 +541,10 @@ body {
 
 body.image-open #game-container.dimmed .scene.active {
     filter: blur(6px) brightness(0.3) saturate(0.5);
+}
+
+body.final-loop-active #game-container .scene.active {
+    filter: blur(6px) brightness(0) saturate(0.5);
 }
 
 #game-container.waking.dimmed .scene.active {

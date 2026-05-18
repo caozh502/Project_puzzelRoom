@@ -1,6 +1,6 @@
 // 数据驱动配置：场景、交互文本、物品位置
 window.GAME_CONFIG = {
-    startScene: 'intro',
+    startScene: 'bedroom', // intro
     introEndScene: 'bedroom',
     initialState: {
         inventory: [],
@@ -84,11 +84,11 @@ window.GAME_CONFIG = {
             id: 'intro',
             background: { type: 'color', value: '#000' },
             giftLines: [
-                '我们走过的每一步，都会在时间里留下回响。',
-                '那些曾经的选择、细微的瞬间，',
-                '都会在未来悄然回应着我们。',
-                '等你好久了，这是开启未来的宝盒......',
-                '去吧，去寻找开启它的钥匙吧。'
+                '「我们走过的每一步，都会在时间里留下回响。」',
+                '「那些曾经的选择、细微的瞬间，',
+                '都会在未来悄然回应着我们。」',
+                '「等你好久了，这是开启未来的宝盒......」',
+                '「去吧，孩子，去寻找开启它的钥匙。」'
             ]
         },
         livingroom: {
@@ -102,15 +102,25 @@ window.GAME_CONFIG = {
             },
             backgroundAfter: 'assets/Picture/livingroom.png',
             backgroundFinal: 'assets/Picture/livingroom_giftBox.png',
-            giftCodePrompt: '▲■●✦',
-            giftCodeAnswer: '5732',
-            finalLine: '咦，茶几上的杂物怎么不见了......这个礼物盒，有点眼熟......'
+            giftCodePrompt: '🔺🟩⚪🔶',
+            giftCodeAnswer: '5372',
+            finalLine: '咦，茶几上的杂物怎么不见了......这个礼物盒，有点眼熟......',
+            finalDialogueLines: [
+                '打开礼物盒的一瞬间，所有的回忆如潮水般涌来。',
+                '那些我们一起走过的每一步，每一个温暖的时刻。',
+                '我想，我已经找到答案了。',
+                '「恭喜你完成了这场时光之旅！」',
+                '「随意逛逛吧，也许还有惊喜等着你噢~」（点击esc或任意位置退出）'
+            ],
+            finalLoopPhotoFolder: 'assets/Picture/final_loop',
+            finalLoopPhotoExtension: 'jpg',
+            finalPhotoDisplayTime: 3000
         },
         bedroom: {
             id: 'bedroom',
             onEnterDialogue: [
                 '呜…好困…',
-                '做了一个奇怪的梦，但又感觉好真实......',
+                '做了一个奇怪的梦，好像是谁在和我说话......',
                 '房间太暗了，先把灯打开吧…'
             ],
             background: {
@@ -161,6 +171,7 @@ window.GAME_CONFIG = {
 
         // bedroom
         wardrobe: { padding: '25% 7%', top: '50%', left: '7%' },
+        'clothes-pile': { padding: '9% 9%', top: '73%', left: '26%' },
         'landscape-venice-photo': { padding: '7% 10%', top: '39%', left: '40%' },
         'vanity-table': { padding: '5% 10%', top: '68%', left: '88%' },
         'bedroom-drawer': { padding: '3% 6%', top: '70%', left: '80%' },
@@ -241,6 +252,7 @@ window.GAME_CONFIG = {
 
         // bedroom
         { id: 'wardrobe', texts: ['衣柜里放满了衣服，看起来很整洁，有一股洗衣液的香味。'] },
+        { id: 'clothes-pile', texts: ['昨天不知道为什么感觉特别累，就直接把衣服乱丢在椅子边上了。'] },
         { id: 'landscape-venice-photo', texts: ['日落时分，威尼斯的水面闪烁着金光，多拉贡们在悠闲交错地游行。'] },
         { id: 'vanity-table', texts: [
             '梳妆台上摆着一些护肤品，下面的抽屉没关好，顺手带上吧。',
@@ -270,8 +282,8 @@ window.GAME_CONFIG = {
         { id: 'guitar', texts: ['吉他的音好像不太准，看来有一阵子没练习了。']},
         { id: 'electric-piano', choiceText: '是否掀开钢琴布？', texts: [
             '钢琴盖上盖着一块布，防尘又防划痕。好久没有练习了呢......',
-            'Donner的电钢琴，当时咬咬牙买的，谁叫它三角形的大长腿那么好看呢~<auto>',
-            '咦？G音的琴键上怎么贴着个布条？'
+            'Donner的电钢琴，当时咬咬牙买的……<auto>',
+            '谁叫它三角形的大长腿那么好看呢~~…………咦？G音的琴键上怎么贴着个布条？'
         ] },
         { id: 'bookcase', texts: ['书柜里塞了一些乐谱和书：《亚当，你是谁》，《魔戒》，《卡尔弗赖什音阶练习》......'] },
         { id: 'storage-box', texts: ['杂物盒里堆着一些圣诞树的装饰品。'] },
