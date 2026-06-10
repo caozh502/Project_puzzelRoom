@@ -29,6 +29,7 @@ window.GAME_CONFIG = {
         drinkSojuSfx: { volume: 0.6 },
         findOpenerSfx: { volume: 0.3 },
         birdsChirpingSfx: { volume: 0, loop: true },
+        bookOpenSfx: { volume: 1 },
     },
     audioSources: {
         detectiveBGM: 'assets/Audio/loveDetective_BGM.m4a',
@@ -52,6 +53,7 @@ window.GAME_CONFIG = {
         findOpenerSfx: 'assets/Audio/findOpener_SFX.mp3',
         clickDotSfx: 'assets/Audio/clickDot_SFX.mp3',
         birdsChirpingSfx: 'assets/Audio/birdsChirping_SFX.mp3',
+        bookOpenSfx: 'assets/Audio/bookOpen_SFX.mp3',
         finalBgm: 'assets/Audio/final_BGM.mp3'
     },
     // 交互展示图片与其他独立图片的统一映射

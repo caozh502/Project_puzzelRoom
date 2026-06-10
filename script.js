@@ -54,7 +54,7 @@ let introPhase = true;
 let imageOverlay, overlayImage, startDot, introRippleLoader;
 // 音频变量
 let detectiveBGM, clickSfx, clickDotSfx, lightSfx, startDotSfx, wakeUpSfx, doorOpenSfx, footStepsSfx;
-let guitarSfx, violinSfx, pianoSfx, showerSfx, birdsChirpingSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx, findOpenerSfx, clothRemoveSfx, finalBgm;
+let guitarSfx, violinSfx, pianoSfx, showerSfx, birdsChirpingSfx, drawerCloseSfx, drillScrewSfx, fridgeOpenSfx, fridgeCloseSfx, openBottleSfx, drinkSojuSfx, findOpenerSfx, clothRemoveSfx, finalBgm, bookOpenSfx;
 // 其他UI变量
 let muteBtn, hideBtn, lightSwitch, giftBox, bedroomDrawer, vanityTable, tvCabinet, photoFrame;
 let fridgeNote, fridgeDoor;
@@ -1028,6 +1028,7 @@ function cacheElements() {
     violinSfx = document.getElementById('violin-sfx');
     pianoSfx = document.getElementById('piano-sfx');
     birdsChirpingSfx = document.getElementById('birds-chirping-sfx');
+    bookOpenSfx = document.getElementById('book-open-sfx');
     clothRemoveSfx = document.getElementById('cloth-remove-sfx');
     showerSfx = document.getElementById('shower-sfx');
     finalBgm = document.getElementById('final-bgm');
@@ -1118,6 +1119,7 @@ function initAudio() {
         violinSfx,
         pianoSfx,
         birdsChirpingSfx,
+        bookOpenSfx,
         clothRemoveSfx,
         showerSfx,
         drawerCloseSfx,
@@ -1171,6 +1173,7 @@ function initAudio() {
             if (findOpenerSfx) findOpenerSfx.muted = isMuted;
             if (finalBgm) finalBgm.muted = isMuted;
             if (birdsChirpingSfx) birdsChirpingSfx.muted = isMuted;
+            if (bookOpenSfx) bookOpenSfx.muted = isMuted;
             muteBtn.textContent = isMuted ? '🔇' : '🔊';
         });
     }
@@ -2008,7 +2011,8 @@ function replayCurrentKeyItem() {
 function initInteractions() {
     const sfxMap = {
         guitar: () => playSfx(guitarSfx),
-        violin: () => playSfx(violinSfx)
+        violin: () => playSfx(violinSfx),
+        bookcase: () => playSfx(bookOpenSfx)
     };
     INTERACTIONS.forEach((interaction) => {
         const { id, texts, loop } = interaction;
@@ -2016,7 +2020,7 @@ function initInteractions() {
         if (!el) return;
         el.addEventListener('click', () => {
             if (!gameState.flags.lightSwitchUsed) {
-                showDialogue('房间太暗了，要先开打才看得清呢…');
+                showDialogue('房间太暗了，要先开灯才看得清呢…');
                 return;
             }
             // 梳妆台特殊处理
